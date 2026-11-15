@@ -466,6 +466,31 @@ window.__ModuleLoader__.load({
         }).catch(() => { /* no catalog: seat stays hidden */ });
         return () => { alive = false; };
       }, []);
+      // Outside clicks close; Escape backs out of a drilled pane first, then
+      // closes — the same discipline as the composer's model seat.
+      React.useEffect(() => {
+        if (!open) return undefined;
+        const close = (event) => {
+          const target = event.target;
+          if (target && typeof target.closest === 'function'
+            && target.closest('[data-rg-knob]')) return;
+          setOpen(false);
+          setPane('root');
+        };
+        const keys = (event) => {
+          if (event.key !== 'Escape') return;
+          event.preventDefault();
+          event.stopPropagation();
+          if (pane !== 'root') setPane('root');
+          else setOpen(false);
+        };
+        document.addEventListener('click', close, true);
+        document.addEventListener('keydown', keys, true);
+        return () => {
+          document.removeEventListener('click', close, true);
+          document.removeEventListener('keydown', keys, true);
+        };
+      }, [open, pane]);
       const groups = catalog && Array.isArray(catalog.groups) ? catalog.groups : [];
       if (!groups.length || !selection) return null;
       const currentGroup = current ? groups.find((entry) => entry.id === current.provider) : undefined;
@@ -492,6 +517,8 @@ window.__ModuleLoader__.load({
           if (!result || result.ok !== true) {
             throw new Error(result && result.error ? result.error.message : 'rejected');
           }
+          setOpen(false);
+          setPane('root');
         } catch (cause) {
           setError(describeKnobError(cause, t));
         } finally {
@@ -513,31 +540,6 @@ window.__ModuleLoader__.load({
         }
         submitModel({ providerId: current.provider, modelId: current.model }, item.effort);
       };
-      // Outside clicks close; Escape backs out of a drilled pane first, then
-      // closes — the same discipline as the composer's model seat.
-      React.useEffect(() => {
-        if (!open) return undefined;
-        const close = (event) => {
-          const target = event.target;
-          if (target && typeof target.closest === 'function'
-            && target.closest('[data-rg-knob]')) return;
-          setOpen(false);
-          setPane('root');
-        };
-        const keys = (event) => {
-          if (event.key !== 'Escape') return;
-          event.preventDefault();
-          event.stopPropagation();
-          if (pane !== 'root') setPane('root');
-          else setOpen(false);
-        };
-        document.addEventListener('click', close, true);
-        document.addEventListener('keydown', keys, true);
-        return () => {
-          document.removeEventListener('click', close, true);
-          document.removeEventListener('keydown', keys, true);
-        };
-      }, [open, pane]);
       const modelItems = [];
       for (const group of groups) {
         modelItems.push({ id: 'h-' + group.id, heading: true, label: group.name || group.id });
