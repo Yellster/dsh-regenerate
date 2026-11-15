@@ -12,6 +12,7 @@ A DSH Web UI plugin that adds regeneration and prompt editing to the conversatio
      - **Regenerate** (primary button, also Ctrl/Cmd+Enter) — send the edited text as a new prompt in the *current* chat, so the model answers again here. The earlier question and answer stay in context.
      - **Branch to a new chat and regenerate** (left of the primary button) — fork just before this message and regenerate in the new chat; this chat stays unchanged.
    - `Cancel` or Escape closes the editor and restores the bubble. Clicking anywhere outside the editor also closes it (a submit in progress is not interrupted); clicking another user message switches the editor to that message. Each button carries a hover tooltip explaining its effect; the busy label matches the chosen mode.
+   - The editor mirrors the bottom composer's two session seats: a **permission-preset picker** (read-only / workspace-write / …) and a **model picker**, over the same session projections and catalogs. A pick writes through the same channels the bottom bar uses (the `/permission <preset>` command and `session.selectModel`), so both surfaces stay in sync; risky presets (full access, auto review) keep the host's confirmation gate. A "Branch" fork inherits whatever is selected at submit time. The seats hide for addressed subagent sessions or when the catalogs are unavailable.
 
 ### Icon style
 

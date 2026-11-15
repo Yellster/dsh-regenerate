@@ -39,6 +39,16 @@ window.__ModuleLoader__.load({
       'branchRegenerateAttachments': 'Branch to a new chat and regenerate ({0} attachments)',
       'addAttachment': 'Add attachments',
       'removeAttachment': 'Remove',
+      'permission': 'Mode',
+      'model': 'Model',
+      'knobFailed': 'Change failed',
+      'sessionBusy': 'The chat is busy — try again after the current turn finishes',
+      'confirmEnable': 'Enable',
+      'confirmCancel': 'Cancel',
+      'fullAccessTitle': 'Enable full access?',
+      'fullAccessBody': 'The agent may run commands and modify files outside the workspace without asking.',
+      'autoTitle': 'Enable auto review?',
+      'autoBody': 'Permission decisions are decided automatically without asking.',
     };
     const zh = {
       'regenerate': '重新生成',
@@ -59,6 +69,16 @@ window.__ModuleLoader__.load({
       'branchRegenerateAttachments': '分支到新对话并重新生成（含 {0} 个附件）',
       'addAttachment': '添加附件',
       'removeAttachment': '移除',
+      'permission': '运行模式',
+      'model': '模型',
+      'knobFailed': '修改失败',
+      'sessionBusy': '对话正在运行，请等当前回合结束后再试',
+      'confirmEnable': '启用',
+      'confirmCancel': '取消',
+      'fullAccessTitle': '启用完整访问？',
+      'fullAccessBody': '代理可以在工作区之外执行命令、修改文件，且不再询问。',
+      'autoTitle': '启用自动审阅？',
+      'autoBody': '权限决策将自动进行，不再逐项询问。',
     };
 
     const CSS = `
@@ -96,6 +116,21 @@ window.__ModuleLoader__.load({
 [data-rg-attach-item][data-rg-uploading]::after{content:'';position:absolute;inset:0;border-radius:inherit;border:2px solid var(--dsw-alias-brand-primary,#4c8dff);border-top-color:transparent;animation:rg-spin .9s linear infinite;}
 [data-rg-add]{display:inline-flex;align-items:center;gap:6px;align-self:center;height:28px;padding:0 10px;border:1px dashed var(--dsw-alias-border-l1,rgba(127,127,127,.35));border-radius:var(--dsw-radius-lg,12px);background:transparent;color:var(--dsw-alias-label-secondary,inherit);font:inherit;font-size:12px;line-height:16px;cursor:pointer;flex:none;}
 [data-rg-add]:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));color:var(--dsw-alias-label-primary,inherit);}
+[data-rg-knobs]{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;position:relative;}
+[data-rg-knob]{position:relative;}
+[data-rg-knob-trigger]{display:inline-flex;align-items:center;gap:6px;max-width:260px;height:26px;padding:0 9px;border:1px solid var(--dsw-alias-border-l1,rgba(127,127,127,.3));border-radius:var(--dsw-radius-lg,12px);background:transparent;color:var(--dsw-alias-label-secondary,inherit);font:inherit;font-size:11.5px;line-height:16px;white-space:nowrap;cursor:pointer;}
+[data-rg-knob-trigger]:hover:not([disabled]){background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));color:var(--dsw-alias-label-primary,inherit);}
+[data-rg-knob-trigger][disabled]{opacity:.45;cursor:default;}
+[data-rg-knob-trigger] svg{width:10px;height:10px;flex:none;display:block;}
+[data-rg-knob-menu]{position:absolute;top:calc(100% + 4px);left:0;z-index:40;min-width:230px;max-width:320px;max-height:300px;overflow:auto;padding:4px;border:1px solid var(--dsw-alias-border-l2,rgba(127,127,127,.3));border-radius:var(--dsw-radius-lg,12px);background:var(--dsw-alias-bg-layer-1,rgba(127,127,127,.06));box-shadow:0 8px 24px rgba(0,0,0,.28);display:flex;flex-direction:column;gap:1px;}
+[data-rg-knob-item]{display:flex;flex-direction:column;gap:1px;padding:6px 8px;border:none;border-radius:var(--dsw-radius-sm,7px);background:transparent;color:var(--dsw-alias-label-primary,inherit);font:inherit;font-size:12px;line-height:16px;text-align:left;cursor:pointer;}
+[data-rg-knob-item]:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));}
+[data-rg-knob-item][data-rg-active]{color:var(--dsw-alias-brand-primary,#4c8dff);}
+[data-rg-knob-detail]{font-size:11px;line-height:14px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));}
+[data-rg-knob-head]{padding:6px 8px 2px;font-size:10.5px;line-height:14px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));text-transform:uppercase;letter-spacing:.04em;}
+[data-rg-knob-confirm]{display:flex;flex-direction:column;gap:6px;padding:8px;border:1px solid var(--dsw-alias-state-warning-primary,rgba(230,180,60,.5));border-radius:var(--dsw-radius-sm,7px);margin:2px;}
+[data-rg-knob-confirm] span{font-size:11.5px;line-height:15px;color:var(--dsw-alias-label-primary,inherit);}
+[data-rg-knob-confirm] div{display:flex;gap:6px;justify-content:flex-end;}
 [data-rg-buttons]{display:flex;justify-content:flex-end;align-items:center;gap:6px;flex-wrap:wrap;}
 [data-rg-hint]{flex:1;min-width:0;font-size:11px;line-height:16px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));}
 [data-rg-error]{font-size:11px;line-height:16px;color:var(--dsw-alias-state-error-primary,#e5534b);}
@@ -341,6 +376,258 @@ window.__ModuleLoader__.load({
 
     function fileDrafts(drafts) {
       return drafts.filter((draft) => !draft.mediaType);
+    }
+
+    // ---- Session knobs: permission preset and model selection ----------------
+    // The inline editor shows the same two composer seats over the same data:
+    // the session's permissions / modelSelection projections for the current
+    // value, and the process catalogs for the options. A pick writes through
+    // the same channels the bottom bar uses (/permission command, session
+    // selectModel), so both surfaces stay in sync and a "Branch" fork
+    // inherits whatever is selected here at submit time.
+
+    const FULL_ACCESS_PRESET = 'danger-full-access';
+    const AUTO_REVIEW_PRESET = 'auto';
+
+    /** One session projection as React state (undefined while absent). */
+    function useProjection(sessionId, key) {
+      const face = React.useMemo(() => {
+        try {
+          const binding = CTX.sessions && CTX.sessions.binding(sessionId);
+          const session = binding && binding.session;
+          return session ? session.projections.faceOf(key) : undefined;
+        } catch (_error) { return undefined; }
+      }, [sessionId]);
+      const subscribe = React.useCallback((notify) => (
+        face ? face.subscribe(notify) : () => {}
+      ), [face]);
+      const getSnapshot = React.useCallback(() => (
+        face ? face.getSnapshot() : undefined
+      ), [face]);
+      return React.useSyncExternalStore(subscribe, getSnapshot);
+    }
+
+    function ChevronGlyph() {
+      return h('svg', {
+        viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
+        'stroke-width': 2.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+        'aria-hidden': true,
+      }, h('path', { d: 'm6 9 6 6 6-6' }));
+    }
+
+    /** Whether the picker seats apply to this session (retained, not a subagent). */
+    function knobsAvailable(sessionId) {
+      try {
+        if (!CTX.sessions || CTX.sessions.subagentAddress(sessionId) !== undefined) return false;
+        return CTX.sessions.binding(sessionId) !== undefined;
+      } catch (_error) { return false; }
+    }
+
+    /** Shared dropdown: trigger chip + menu list, closes on outside clicks. */
+    function KnobMenu({ label, title, items, activeId, onPick, busy }) {
+      const [open, setOpen] = React.useState(false);
+      React.useEffect(() => {
+        if (!open) return undefined;
+        const close = (event) => {
+          const target = event.target;
+          if (target && typeof target.closest === 'function'
+            && target.closest('[data-rg-knob]')) return;
+          setOpen(false);
+        };
+        document.addEventListener('click', close, true);
+        return () => document.removeEventListener('click', close, true);
+      }, [open]);
+      return h('div', { 'data-rg-knob': '' },
+        h('button', {
+          type: 'button', 'data-rg-knob-trigger': '', 'aria-haspopup': 'listbox',
+          'aria-expanded': open ? 'true' : 'false',
+          disabled: Boolean(busy),
+          title, onClick: (event) => { event.preventDefault(); event.stopPropagation(); setOpen(!open); },
+        }, label, h(ChevronGlyph)),
+        open ? h('div', { 'data-rg-knob-menu': '', role: 'listbox' },
+          items.map((item) => (item.heading
+            ? h('span', { 'data-rg-knob-head': '', key: 'h-' + item.id }, item.label)
+            : h('button', {
+                type: 'button', 'data-rg-knob-item': '', role: 'option',
+                'data-rg-active': item.id === activeId ? '' : undefined,
+                'aria-selected': item.id === activeId ? 'true' : 'false',
+                key: item.id, title: item.detail || undefined,
+                onClick: (event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onPick(item);
+                },
+              },
+              h('span', null, item.label),
+              item.detail ? h('span', { 'data-rg-knob-detail': '' }, item.detail) : null))))
+          : null);
+    }
+
+    function KnobError({ error }) {
+      return error ? h('span', { 'data-rg-error': '', role: 'status' }, error) : null;
+    }
+
+    function describeKnobError(cause, t) {
+      const message = cause && cause.message ? String(cause.message) : '';
+      return /writer-held/i.test(message) ? t('sessionBusy') : t('knobFailed') + (message ? ' — ' + message : '');
+    }
+
+    /** Permission preset seat: the composer's conversation.input.permission. */
+    function PermissionPicker({ sessionId, busy, t }) {
+      const selection = useProjection(sessionId, 'permissions');
+      const [catalog, setCatalog] = React.useState(null);
+      const [error, setError] = React.useState('');
+      const [pending, setPending] = React.useState(null);
+      const [confirming, setConfirming] = React.useState(null);
+      React.useEffect(() => {
+        let alive = true;
+        CTX.remote.permissionPresets.catalog().then((result) => {
+          if (alive && result && result.ok) setCatalog(result.value);
+        }).catch(() => { /* no catalog: seat stays hidden */ });
+        return () => { alive = false; };
+      }, []);
+      const options = catalog && Array.isArray(catalog.options) ? catalog.options : [];
+      if (!options.length || !selection || typeof selection.currentValue !== 'string') return null;
+      const current = options.find((option) => option.value === selection.currentValue);
+      const label = current ? current.name : selection.currentValue;
+      const submitPreset = async (value) => {
+        setPending(value);
+        setError('');
+        try {
+          const result = await CTX.remote.commands.execute(sessionId, '/permission ' + value, []);
+          if (!result || result.ok !== true) {
+            throw new Error(result && result.error ? result.error.message : 'rejected');
+          }
+          const outcome = result.value && result.value.result;
+          if (outcome && outcome.kind === 'error') throw new Error(outcome.text || 'failed');
+        } catch (cause) {
+          setError(describeKnobError(cause, t));
+        } finally {
+          setPending(null);
+        }
+      };
+      const pick = (item) => {
+        if (item.id === selection.currentValue) return;
+        if (item.id === FULL_ACCESS_PRESET || item.id === AUTO_REVIEW_PRESET) {
+          setConfirming(item.id);
+          return;
+        }
+        submitPreset(item.id);
+      };
+      const confirmingOption = options.find((option) => option.value === confirming);
+      const confirmTitle = confirming === AUTO_REVIEW_PRESET ? t('autoTitle') : t('fullAccessTitle');
+      const confirmBody = confirmingOption && confirmingOption.description
+        ? confirmingOption.description
+        : (confirming === AUTO_REVIEW_PRESET ? t('autoBody') : t('fullAccessBody'));
+      return h('div', { 'data-rg-knob': '' },
+        h(KnobMenu, {
+          label: (pending ? '… ' : '') + label,
+          title: current && current.description ? current.description : undefined,
+          busy: busy || pending !== null,
+          items: options.map((option) => ({
+            id: option.value,
+            label: option.name,
+            detail: option.description || undefined,
+          })),
+          activeId: selection.currentValue,
+          onPick: pick,
+        }),
+        confirming
+          ? h('div', { 'data-rg-knob-confirm': '', role: 'alertdialog', 'aria-label': confirmTitle },
+              h('span', null, confirmTitle + ' ' + confirmBody),
+              h('div', null,
+                h('button', {
+                  type: 'button', 'data-rg-action': '', 'data-rg-text': '',
+                  onClick: (event) => { event.preventDefault(); event.stopPropagation(); setConfirming(null); },
+                }, t('confirmCancel')),
+                h('button', {
+                  type: 'button', 'data-rg-action': '', 'data-rg-text': '', 'data-rg-primary': '',
+                  onClick: (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const value = confirming;
+                    setConfirming(null);
+                    if (value) submitPreset(value);
+                  },
+                }, t('confirmEnable'))))
+          : null,
+        h(KnobError, { error }));
+    }
+
+    /** Model seat: the composer's conversation.input.model. */
+    function ModelPicker({ sessionId, busy, t }) {
+      const selection = useProjection(sessionId, 'modelSelection');
+      const [catalog, setCatalog] = React.useState(null);
+      const [error, setError] = React.useState('');
+      const [pending, setPending] = React.useState(null);
+      const current = selection && selection.next ? selection.next : null;
+      React.useEffect(() => {
+        let alive = true;
+        CTX.remote.session.modelCatalog().then((result) => {
+          if (alive && result && result.ok) setCatalog(result.value);
+        }).catch(() => { /* no catalog: seat stays hidden */ });
+        return () => { alive = false; };
+      }, []);
+      const groups = catalog && Array.isArray(catalog.groups) ? catalog.groups : [];
+      if (!groups.length || !selection) return null;
+      const findLabel = (sel) => {
+        if (!sel) return null;
+        const group = groups.find((entry) => entry.id === sel.provider);
+        const model = group ? group.models.find((entry) => entry.id === sel.model) : undefined;
+        return model ? model.name : null;
+      };
+      const activeId = current ? current.provider + '/' + current.model : undefined;
+      const label = pending
+        ? '… ' + (pending.label || '')
+        : (findLabel(current) || (current ? current.provider + '/' + current.model : t('model')));
+      const submitModel = async (item, reasoningEffort) => {
+        setPending(item);
+        setError('');
+        try {
+          const request = { sessionId, provider: item.providerId, model: item.modelId };
+          if (reasoningEffort !== undefined) request.reasoningEffort = reasoningEffort;
+          const result = await CTX.remote.session.selectModel(request, new AbortController().signal);
+          if (!result || result.ok !== true) {
+            throw new Error(result && result.error ? result.error.message : 'rejected');
+          }
+        } catch (cause) {
+          setError(describeKnobError(cause, t));
+        } finally {
+          setPending(null);
+        }
+      };
+      const pick = (item) => {
+        if (item.modelId === undefined) return;
+        if (current && current.provider === item.providerId && current.model === item.modelId) return;
+        const reasoningEffort = current
+          && current.provider === item.providerId
+          && current.model === item.modelId
+          && current.reasoningEffort !== undefined
+          ? current.reasoningEffort
+          : item.defaultEffort;
+        submitModel(item, reasoningEffort);
+      };
+      const items = [];
+      for (const group of groups) {
+        items.push({ id: 'h-' + group.id, heading: true, label: group.name || group.id });
+        for (const model of group.models) {
+          items.push({
+            id: group.id + '/' + model.id,
+            providerId: group.id,
+            modelId: model.id,
+            defaultEffort: model.reasoning && model.reasoning.defaultEffort,
+            label: model.name,
+            detail: model.description || undefined,
+          });
+        }
+      }
+      return h('div', { 'data-rg-knob': '' },
+        h(KnobMenu, {
+          label, title: t('model'),
+          busy: busy || pending !== null,
+          items, activeId, onPick: pick,
+        }),
+        h(KnobError, { error }));
     }
 
     /** Ordered ChatNode list from a `useChat` snapshot. */
@@ -773,6 +1060,11 @@ window.__ModuleLoader__.load({
               'aria-hidden': true, tabIndex: -1,
               onChange: (event) => { addFiles(event.target.files); event.target.value = ''; },
             }),
+            knobsAvailable(props.sessionId)
+              ? h('div', { 'data-rg-knobs': '' },
+                  h(PermissionPicker, { sessionId: props.sessionId, busy, t }),
+                  h(ModelPicker, { sessionId: props.sessionId, busy, t }))
+              : null,
             h('textarea', {
               value: text, 'aria-label': t('editHint'), spellCheck: false, autoFocus: true,
               onChange: (event) => setText(event.target.value),
@@ -816,7 +1108,7 @@ window.__ModuleLoader__.load({
 
     return {
       name: 'dsh-regenerate',
-      inject: ['slots', 'locale', 'sessions', 'uiConversation', 'uiWorkspace', 'remote', 'remote.session'],
+      inject: ['slots', 'locale', 'sessions', 'uiConversation', 'uiWorkspace', 'remote', 'remote.session', 'remote.permissionPresets', 'remote.commands'],
       apply(ctx) {
         CTX = ctx;
         ctx.effect(() => ctx.locale.register(NS, {
