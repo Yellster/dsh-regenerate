@@ -1,0 +1,16 @@
+{
+  "meta": {
+    "title": "重新生成与编辑提问",
+    "description": "在 DSH 回答下方添加重新生成按钮，并支持点击或按钮编辑已发送的用户提问后重新发送。"
+  },
+  "ui": {
+    "regenerate": "重新生成",
+    "regenerating": "正在重新生成…",
+    "edit": "编辑",
+    "editHint": "编辑提问后重新发送",
+    "send": "保存并重新发送",
+    "cancel": "取消",
+    "failed": "操作失败",
+    "emptyPrompt": "提问内容不能为空"
+  }
+}

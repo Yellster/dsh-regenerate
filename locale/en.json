@@ -1,0 +1,16 @@
+{
+  "meta": {
+    "title": "Regenerate and edit prompts",
+    "description": "Adds a regenerate button below assistant answers and lets you edit and resend sent user prompts."
+  },
+  "ui": {
+    "regenerate": "Regenerate",
+    "regenerating": "Regenerating…",
+    "edit": "Edit",
+    "editHint": "Edit the prompt, then resend it",
+    "send": "Save and resend",
+    "cancel": "Cancel",
+    "failed": "Operation failed",
+    "emptyPrompt": "The prompt cannot be empty"
+  }
+}
