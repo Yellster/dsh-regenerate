@@ -1,0 +1,45 @@
+{
+  "format": 1,
+  "title": {
+    "en": "Yellster's DSH plugins",
+    "zh": "Yellster 的 DSH 插件"
+  },
+  "plugins": [
+    {
+      "name": "dsh-regenerate",
+      "title": {
+        "en": "Regenerate and edit prompts",
+        "zh": "重新生成与编辑提问"
+      },
+      "description": {
+        "en": "Adds a regenerate button below assistant answers and lets you edit and resend sent user prompts.",
+        "zh": "在 DSH 回答下方添加重新生成按钮，并支持点击或按钮编辑已发送的用户提问后重新发送。"
+      },
+      "author": "Yellster",
+      "homepage": "https://github.com/Yellster/dsh-regenerate",
+      "repository": {
+        "url": "https://github.com/Yellster/dsh-regenerate"
+      },
+      "icon": "icon.svg",
+      "metadata": {
+        "keywords": [
+          "regenerate",
+          "edit",
+          "prompt"
+        ]
+      },
+      "versions": [
+        {
+          "version": "1.0.0",
+          "publishTimestamp": 1794717130,
+          "source": {
+            "type": "git",
+            "url": "https://github.com/Yellster/dsh-regenerate",
+            "commit": "4875bf8993e39f66a3a3e04e8cfefb7a27c34bea"
+          },
+          "engines": {}
+        }
+      ]
+    }
+  ]
+}
