@@ -37,6 +37,8 @@ window.__ModuleLoader__.load({
       'attachments': 'Attachments: {0} image(s), {1} file(s)',
       'attachmentsMissing': 'Sent, but some attachments could not be carried over — add them again',
       'branchRegenerateAttachments': 'Branch to a new chat and regenerate ({0} attachments)',
+      'addAttachment': 'Add attachments',
+      'removeAttachment': 'Remove',
     };
     const zh = {
       'regenerate': '重新生成',
@@ -55,6 +57,8 @@ window.__ModuleLoader__.load({
       'attachments': '附件：{0} 张图片、{1} 个文件',
       'attachmentsMissing': '已发送，但部分附件未能携带，请重新添加',
       'branchRegenerateAttachments': '分支到新对话并重新生成（含 {0} 个附件）',
+      'addAttachment': '添加附件',
+      'removeAttachment': '移除',
     };
 
     const CSS = `
@@ -87,6 +91,11 @@ window.__ModuleLoader__.load({
 [data-rg-file-body]{display:flex;flex-direction:column;min-width:0;gap:2px;}
 [data-rg-file-name]{font-size:12px;line-height:16px;color:var(--dsw-alias-label-primary,inherit);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 [data-rg-file-meta]{font-size:11px;line-height:14px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));}
+[data-rg-attach-item] [data-rg-remove]{position:absolute;top:-6px;right:-6px;width:18px;height:18px;padding:0;border:1px solid var(--dsw-alias-border-l1,rgba(127,127,127,.3));border-radius:50%;background:var(--dsw-alias-bg-layer-1,rgba(127,127,127,.12));color:var(--dsw-alias-label-secondary,inherit);font-size:11px;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center;}
+[data-rg-attach-item][data-rg-own]:hover [data-rg-remove]{display:inline-flex;}
+[data-rg-attach-item][data-rg-uploading]::after{content:'';position:absolute;inset:0;border-radius:inherit;border:2px solid var(--dsw-alias-brand-primary,#4c8dff);border-top-color:transparent;animation:rg-spin .9s linear infinite;}
+[data-rg-add]{display:inline-flex;align-items:center;gap:6px;align-self:center;height:28px;padding:0 10px;border:1px dashed var(--dsw-alias-border-l1,rgba(127,127,127,.35));border-radius:var(--dsw-radius-lg,12px);background:transparent;color:var(--dsw-alias-label-secondary,inherit);font:inherit;font-size:12px;line-height:16px;cursor:pointer;flex:none;}
+[data-rg-add]:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));color:var(--dsw-alias-label-primary,inherit);}
 [data-rg-buttons]{display:flex;justify-content:flex-end;align-items:center;gap:6px;flex-wrap:wrap;}
 [data-rg-hint]{flex:1;min-width:0;font-size:11px;line-height:16px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));}
 [data-rg-error]{font-size:11px;line-height:16px;color:var(--dsw-alias-state-error-primary,#e5534b);}
@@ -177,9 +186,60 @@ window.__ModuleLoader__.load({
         h('path', { d: 'm21 15-5-5L5 21' }));
     }
 
-    /** Read-only attachment rail mirroring the composer's draft previews:
-     * 64x64 image thumbnails and 240x64 file cards. */
-    function AttachmentRail({ blocks, sessionId, t }) {
+    function PlusGlyph() {
+      return h('svg', {
+        viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
+        'stroke-width': 1.9, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+        'aria-hidden': true, style: { width: 14, height: 14 },
+      },
+        h('path', { d: 'M12 5v14' }),
+        h('path', { d: 'M5 12h14' }));
+    }
+
+    const IMAGE_MEDIA_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+
+    function imageMediaTypeOf(file) {
+      return IMAGE_MEDIA_TYPES.includes(file.type) ? file.type : null;
+    }
+
+    /** Read one File's bytes for the authenticated raw-byte upload route. */
+    function readBytes(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(new Uint8Array(reader.result));
+        reader.onerror = () => reject(reader.error || new Error('file read failed'));
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    // DSH's own browser upload intake (dsh-client-file-upload): a staged receipt
+    // is minted for the target Session's Agent and consumed by the next
+    // session/prompt there. With mediaType the body becomes a prompt image,
+    // without it the bytes are stored verbatim as a file.
+    async function uploadDraft(sessionId, file) {
+      const mediaType = imageMediaTypeOf(file);
+      const query = new URLSearchParams({ sessionId });
+      if (file.name) query.set('name', file.name);
+      if (mediaType) query.set('mediaType', mediaType);
+      const bytes = await readBytes(file);
+      const response = await fetch('/api/session/uploadFileBinary?' + query.toString(), {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/octet-stream' },
+        body: bytes,
+      });
+      if (!response.ok) throw new Error('upload failed: HTTP ' + response.status);
+      const result = await response.json();
+      if (!result || result.ok !== true || !result.value || typeof result.value.receiptId !== 'string') {
+        const error = result && result.error;
+        throw new Error((error && error.message) || 'upload rejected');
+      }
+      return { receiptId: result.value.receiptId, mediaType, file };
+    }
+
+    /** Attachment rail: original attachments (read-only, carried over) plus
+     * added drafts (removable chips with local previews) and the add button. */
+    function AttachmentRail({ blocks, sessionId, drafts, uploading, onAdd, onRemove, t }) {
       const images = blocks.filter((block) => block.type === 'image');
       const files = blocks.filter((block) => block.type === 'file');
       const [, setRevision] = React.useState(0);
@@ -207,10 +267,16 @@ window.__ModuleLoader__.load({
         return () => { alive = false; };
       }, [imageKey, sessionId]);
 
-      if (!images.length && !files.length) return null;
+      const removeChip = (id) => (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (onRemove) onRemove(id);
+      };
+      const empty = !images.length && !files.length && !drafts.length;
+      if (empty && !onAdd) return null;
       return h('div', {
         'data-rg-attachments': '',
-        'aria-label': format(t('attachments'), images.length, files.length),
+        'aria-label': format(t('attachments'), images.length + imageDrafts(drafts).length, files.length + fileDrafts(drafts).length),
       },
         images.map((block) => {
           const ref = block.attachment;
@@ -230,7 +296,51 @@ window.__ModuleLoader__.load({
             h('span', { 'data-rg-file-body': '' },
               h('span', { 'data-rg-file-name': '' }, ref.name),
               h('span', { 'data-rg-file-meta': '' }, meta)));
-        }));
+        }),
+        imageDrafts(drafts).map((draft) => h('div', {
+          'data-rg-attach-item': '', 'data-rg-own': '', key: draft.id,
+          'data-rg-uploading': uploading ? '' : undefined,
+        },
+          h('div', { 'data-rg-thumb': '' },
+            h('img', { src: draft.previewUrl, alt: draft.file.name || '' })),
+          h('button', {
+            type: 'button', 'data-rg-remove': '', 'aria-label': t('removeAttachment'),
+            title: t('removeAttachment'), disabled: uploading, onClick: removeChip(draft.id),
+          }, '×'))),
+        fileDrafts(drafts).map((draft) => {
+          const ext = fileExtension(draft.file.name).toUpperCase().slice(0, 8);
+          const meta = [ext, fileSizeText(draft.file.size)].filter(Boolean).join(' · ');
+          return h('div', {
+            'data-rg-file': '', 'data-rg-own': '', key: draft.id,
+            'data-rg-uploading': uploading ? '' : undefined,
+          },
+            h('span', { 'data-rg-file-icon': '' }, h(FileGlyph)),
+            h('span', { 'data-rg-file-body': '' },
+              h('span', { 'data-rg-file-name': '' }, draft.file.name),
+              h('span', { 'data-rg-file-meta': '' }, meta)),
+            h('button', {
+              type: 'button', 'data-rg-remove': '', 'aria-label': t('removeAttachment'),
+              title: t('removeAttachment'), disabled: uploading, onClick: removeChip(draft.id),
+            }, '×'));
+        }),
+        onAdd && !uploading
+          ? h('button', {
+              type: 'button', 'data-rg-add': '', 'aria-label': t('addAttachment'),
+              title: t('addAttachment'), onClick: (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onAdd();
+              },
+            }, h(PlusGlyph), t('addAttachment'))
+          : null);
+    }
+
+    function imageDrafts(drafts) {
+      return drafts.filter((draft) => draft.mediaType);
+    }
+
+    function fileDrafts(drafts) {
+      return drafts.filter((draft) => !draft.mediaType);
     }
 
     /** Ordered ChatNode list from a `useChat` snapshot. */
@@ -362,21 +472,37 @@ window.__ModuleLoader__.load({
       return 'rg-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
     }
 
-    /** Build the resubmitted prompt: edited text plus the original attachments,
-     * read back for whichever Session will receive the prompt. */
-    async function buildContent(ctx, sourceSessionId, targetSessionId, node, text) {
+    /** Added drafts become staged receipts on the receiving Session's Agent,
+     * mirroring how the composer uploads its own drafts. */
+    async function draftParts(targetSessionId, drafts) {
+      const parts = [];
+      let missing = 0;
+      for (const draft of drafts) {
+        try {
+          parts.push({ type: 'file', receiptId: draft.receipts[targetSessionId]
+            || (draft.receipts[targetSessionId] = (await uploadDraft(targetSessionId, draft.file)).receiptId) });
+        } catch (_error) { missing += 1; }
+      }
+      return { parts, missing };
+    }
+
+    /** Build the resubmitted prompt: edited text, the original attachments read
+     * back, and added drafts uploaded for whichever Session receives it. */
+    async function buildContent(ctx, sourceSessionId, targetSessionId, node, text, drafts) {
       const blocks = attachmentBlocksOf(node);
-      const [images, files] = await Promise.all([
+      const [images, files, added] = await Promise.all([
         imageParts(ctx, sourceSessionId, blocks),
         fileParts(targetSessionId, blocks),
+        draftParts(targetSessionId, drafts || []),
       ]);
       return {
         content: [
-          { type: 'text', text },
+          ...(text ? [{ type: 'text', text }] : []),
           ...images.parts,
           ...files.parts,
+          ...added.parts,
         ],
-        missing: images.missing + files.missing,
+        missing: images.missing + files.missing + added.missing,
       };
     }
 
@@ -400,9 +526,10 @@ window.__ModuleLoader__.load({
 
     /** Branch mode (secondary option): fork just before the edited message and
      * regenerate in the new Session. */
-    async function resubmit(ctx, sessionId, node, text) {
+    async function resubmit(ctx, sessionId, node, text, drafts) {
       const prompt = String(text == null ? '' : text);
-      if (!prompt.trim()) throw new Error('empty');
+      const hasAttachments = attachmentBlocksOf(node).length > 0 || (drafts && drafts.length > 0);
+      if (!prompt.trim() && !hasAttachments) throw new Error('empty');
       const fork = { sessionId, increaseTitle: true };
       // Fork just BEFORE the user message: the child then contains a clean
       // prefix and exactly one (re)submitted prompt. Cutting at the message
@@ -411,17 +538,18 @@ window.__ModuleLoader__.load({
       if (typeof seq === 'number') fork.atSeq = seq > 0 ? seq - 1 : seq;
       const childId = await ctx.sessions.fork(fork);
       try { ctx.uiWorkspace.openSession(childId); } catch (_error) { /* keep going */ }
-      const built = await buildContent(ctx, sessionId, childId, node, prompt);
+      const built = await buildContent(ctx, sessionId, childId, node, prompt, drafts);
       await sendPrompt(ctx, childId, built.content);
       return { childId, missing: built.missing };
     }
 
     /** Default: keep this Session and append the edited text as a new prompt,
      * so the model regenerates its answer here. */
-    async function appendInSession(ctx, sessionId, node, text) {
+    async function appendInSession(ctx, sessionId, node, text, drafts) {
       const prompt = String(text == null ? '' : text);
-      if (!prompt.trim()) throw new Error('empty');
-      const built = await buildContent(ctx, sessionId, sessionId, node, prompt);
+      const hasAttachments = attachmentBlocksOf(node).length > 0 || (drafts && drafts.length > 0);
+      if (!prompt.trim() && !hasAttachments) throw new Error('empty');
+      const built = await buildContent(ctx, sessionId, sessionId, node, prompt, drafts);
       await sendPrompt(ctx, sessionId, built.content);
       return { childId: sessionId, missing: built.missing };
     }
@@ -564,24 +692,66 @@ window.__ModuleLoader__.load({
       }, [editing]);
 
       const blocks = attachmentBlocksOf(node);
+      const [drafts, setDrafts] = React.useState([]);
+      const inputRef = React.useRef(null);
+      // Mirror for unmount cleanup: revoke object URLs without a state update.
+      const draftsRef = React.useRef(drafts);
+      draftsRef.current = drafts;
+      const releaseDrafts = (list) => {
+        list.forEach((draft) => { if (draft.previewUrl) URL.revokeObjectURL(draft.previewUrl); });
+      };
+      React.useEffect(() => () => releaseDrafts(draftsRef.current), []);
+      const addFiles = (fileList) => {
+        const files = Array.from(fileList || []);
+        if (!files.length) return;
+        setDrafts((current) => [
+          ...current,
+          ...files.map((file) => ({
+            id: newRequestId(),
+            file,
+            mediaType: imageMediaTypeOf(file),
+            previewUrl: imageMediaTypeOf(file) ? URL.createObjectURL(file) : null,
+            receipts: {},
+          })),
+        ]);
+      };
+      const removeDraft = (id) => {
+        setDrafts((current) => {
+          releaseDrafts(current.filter((item) => item.id === id));
+          return current.filter((item) => item.id !== id);
+        });
+      };
       const openEditor = () => {
         setText(textOf(node));
         setError('');
         setEditing(true);
       };
-      const cancel = () => { setEditing(false); setError(''); };
+      const cancel = () => {
+        setDrafts((current) => {
+          releaseDrafts(current);
+          return [];
+        });
+        setEditing(false);
+        setError('');
+      };
       const submit = async (mode) => {
         if (busy) return;
-        if (!text.trim()) { setError(t('emptyPrompt')); return; }
+        if (!text.trim() && !blocks.length && !drafts.length) { setError(t('emptyPrompt')); return; }
         if (!node) { setError(t('noPrompt')); return; }
         setBusyMode(mode);
         setError('');
         try {
           const outcome = mode === 'append'
-            ? await appendInSession(CTX, props.sessionId, node, text)
-            : await resubmit(CTX, props.sessionId, node, text);
+            ? await appendInSession(CTX, props.sessionId, node, text, drafts)
+            : await resubmit(CTX, props.sessionId, node, text, drafts);
           if (outcome.missing) setError(t('attachmentsMissing'));
-          else setEditing(false);
+          else {
+            setDrafts((current) => {
+              releaseDrafts(current);
+              return [];
+            });
+            setEditing(false);
+          }
         } catch (cause) {
           setError((cause && cause.message) || t('failed'));
         } finally {
@@ -591,9 +761,18 @@ window.__ModuleLoader__.load({
 
       const editor = editing
         ? h('div', { 'data-rg-editor': '' },
-            blocks.length > 0
-              ? h(AttachmentRail, { blocks, sessionId: props.sessionId, t })
-              : null,
+            h(AttachmentRail, {
+              blocks, sessionId: props.sessionId, t,
+              drafts,
+              uploading: busy,
+              onAdd: () => { if (inputRef.current) inputRef.current.click(); },
+              onRemove: removeDraft,
+            }),
+            h('input', {
+              ref: inputRef, type: 'file', multiple: true, hidden: true,
+              'aria-hidden': true, tabIndex: -1,
+              onChange: (event) => { addFiles(event.target.files); event.target.value = ''; },
+            }),
             h('textarea', {
               value: text, 'aria-label': t('editHint'), spellCheck: false, autoFocus: true,
               onChange: (event) => setText(event.target.value),
