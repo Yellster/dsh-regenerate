@@ -24,9 +24,6 @@ window.__ModuleLoader__.load({
       'regenerate': 'Regenerate',
       'regenerating': 'Regenerating…',
       'regenerateHint': 'Regenerate the answer in this chat; the earlier exchange stays in context',
-      'branchRegenerate': 'Branch to a new chat and regenerate',
-      'branching': 'Branching…',
-      'branchRegenerateHint': 'Regenerate from this message in a new chat; this chat stays unchanged',
       'edit': 'Edit',
       'editHint': 'Edit this prompt',
       'cancel': 'Cancel',
@@ -36,7 +33,6 @@ window.__ModuleLoader__.load({
       'editorHint': 'Ctrl/⌘ + Enter to regenerate · Esc to cancel',
       'attachments': 'Attachments: {0} image(s), {1} file(s)',
       'attachmentsMissing': 'Sent, but some attachments could not be carried over — add them again',
-      'branchRegenerateAttachments': 'Branch to a new chat and regenerate ({0} attachments)',
       'addAttachment': 'Add attachments',
       'removeAttachment': 'Remove',
       'permission': 'Mode',
@@ -54,9 +50,6 @@ window.__ModuleLoader__.load({
       'regenerate': '重新生成',
       'regenerating': '正在重新生成…',
       'regenerateHint': '在当前对话重新生成回答，原有问答会保留在上下文里',
-      'branchRegenerate': '分支到新对话并重新生成',
-      'branching': '正在分支…',
-      'branchRegenerateHint': '从这条提问分支到新对话重新生成，当前对话保持不变',
       'edit': '编辑',
       'editHint': '编辑这条提问',
       'cancel': '取消',
@@ -66,7 +59,6 @@ window.__ModuleLoader__.load({
       'editorHint': 'Ctrl/⌘ + Enter 重新生成 · Esc 取消',
       'attachments': '附件：{0} 张图片、{1} 个文件',
       'attachmentsMissing': '已发送，但部分附件未能携带，请重新添加',
-      'branchRegenerateAttachments': '分支到新对话并重新生成（含 {0} 个附件）',
       'addAttachment': '添加附件',
       'removeAttachment': '移除',
       'permission': '运行模式',
@@ -114,15 +106,18 @@ window.__ModuleLoader__.load({
 [data-rg-attach-item] [data-rg-remove]{position:absolute;top:-6px;right:-6px;width:18px;height:18px;padding:0;border:1px solid var(--dsw-alias-border-l1,rgba(127,127,127,.3));border-radius:50%;background:var(--dsw-alias-bg-layer-1,rgba(127,127,127,.12));color:var(--dsw-alias-label-secondary,inherit);font-size:11px;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center;}
 [data-rg-attach-item][data-rg-own]:hover [data-rg-remove]{display:inline-flex;}
 [data-rg-attach-item][data-rg-uploading]::after{content:'';position:absolute;inset:0;border-radius:inherit;border:2px solid var(--dsw-alias-brand-primary,#4c8dff);border-top-color:transparent;animation:rg-spin .9s linear infinite;}
-[data-rg-add]{display:inline-flex;align-items:center;gap:6px;align-self:center;height:28px;padding:0 10px;border:1px dashed var(--dsw-alias-border-l1,rgba(127,127,127,.35));border-radius:var(--dsw-radius-lg,12px);background:transparent;color:var(--dsw-alias-label-secondary,inherit);font:inherit;font-size:12px;line-height:16px;cursor:pointer;flex:none;}
+[data-rg-add]{display:inline-flex;align-items:center;justify-content:center;flex:none;width:28px;height:28px;padding:0;border:none;border-radius:50%;background:transparent;color:var(--dsw-alias-label-secondary,inherit);font:inherit;cursor:pointer;}
 [data-rg-add]:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));color:var(--dsw-alias-label-primary,inherit);}
-[data-rg-knobs]{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;position:relative;}
+[data-rg-add] svg{width:16px;height:16px;display:block;}
+[data-rg-controls]{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+[data-rg-controls] [data-rg-left]{display:flex;align-items:center;gap:4px;min-width:0;}
+[data-rg-controls] [data-rg-right]{display:flex;align-items:center;gap:8px;margin-left:auto;min-width:0;}
 [data-rg-knob]{position:relative;}
 [data-rg-knob-trigger]{display:inline-flex;align-items:center;gap:6px;max-width:260px;height:26px;padding:0 9px;border:1px solid var(--dsw-alias-border-l1,rgba(127,127,127,.3));border-radius:var(--dsw-radius-lg,12px);background:transparent;color:var(--dsw-alias-label-secondary,inherit);font:inherit;font-size:11.5px;line-height:16px;white-space:nowrap;cursor:pointer;}
 [data-rg-knob-trigger]:hover:not([disabled]){background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));color:var(--dsw-alias-label-primary,inherit);}
 [data-rg-knob-trigger][disabled]{opacity:.45;cursor:default;}
 [data-rg-knob-trigger] svg{width:10px;height:10px;flex:none;display:block;}
-[data-rg-knob-menu]{position:absolute;top:calc(100% + 4px);left:0;z-index:40;min-width:230px;max-width:320px;max-height:300px;overflow:auto;padding:4px;border:1px solid var(--dsw-alias-border-l2,rgba(127,127,127,.3));border-radius:var(--dsw-radius-lg,12px);background:var(--dsw-alias-bg-layer-1,rgba(127,127,127,.06));box-shadow:0 8px 24px rgba(0,0,0,.28);display:flex;flex-direction:column;gap:1px;}
+[data-rg-knob-menu]{position:absolute;bottom:calc(100% + 6px);left:0;z-index:40;min-width:230px;max-width:320px;max-height:300px;overflow:auto;padding:4px;border:1px solid var(--dsw-alias-border-l2,rgba(127,127,127,.3));border-radius:var(--dsw-radius-lg,12px);background:var(--dsw-alias-bg-layer-1,rgba(127,127,127,.06));box-shadow:0 8px 24px rgba(0,0,0,.28);display:flex;flex-direction:column;gap:1px;}
 [data-rg-knob-item]{display:flex;flex-direction:column;gap:1px;padding:6px 8px;border:none;border-radius:var(--dsw-radius-sm,7px);background:transparent;color:var(--dsw-alias-label-primary,inherit);font:inherit;font-size:12px;line-height:16px;text-align:left;cursor:pointer;}
 [data-rg-knob-item]:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));}
 [data-rg-knob-item][data-rg-active]{color:var(--dsw-alias-brand-primary,#4c8dff);}
@@ -131,8 +126,14 @@ window.__ModuleLoader__.load({
 [data-rg-knob-confirm]{display:flex;flex-direction:column;gap:6px;padding:8px;border:1px solid var(--dsw-alias-state-warning-primary,rgba(230,180,60,.5));border-radius:var(--dsw-radius-sm,7px);margin:2px;}
 [data-rg-knob-confirm] span{font-size:11.5px;line-height:15px;color:var(--dsw-alias-label-primary,inherit);}
 [data-rg-knob-confirm] div{display:flex;gap:6px;justify-content:flex-end;}
-[data-rg-buttons]{display:flex;justify-content:flex-end;align-items:center;gap:6px;flex-wrap:wrap;}
-[data-rg-hint]{flex:1;min-width:0;font-size:11px;line-height:16px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));}
+[data-rg-send]{display:inline-flex;align-items:center;justify-content:center;flex:none;width:32px;height:32px;padding:0;border:none;border-radius:50%;background:var(--dsw-alias-brand-primary,#4c8dff);color:#fff;cursor:pointer;}
+[data-rg-send]:hover:not([disabled]){opacity:.88;}
+[data-rg-send]:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4c8dff);outline-offset:1px;}
+[data-rg-send][disabled]{opacity:.45;cursor:default;}
+[data-rg-send] svg{width:16px;height:16px;display:block;}
+[data-rg-send][data-rg-busy] svg{animation:rg-spin .9s linear infinite;}
+@media (prefers-reduced-motion:reduce){[data-rg-send][data-rg-busy] svg{animation:none;}}
+[data-rg-errorline]{font-size:11px;line-height:16px;color:var(--dsw-alias-state-error-primary,#e5534b);}
 [data-rg-error]{font-size:11px;line-height:16px;color:var(--dsw-alias-state-error-primary,#e5534b);}
 `;
 
@@ -225,10 +226,20 @@ window.__ModuleLoader__.load({
       return h('svg', {
         viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
         'stroke-width': 1.9, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
-        'aria-hidden': true, style: { width: 14, height: 14 },
+        'aria-hidden': true, style: { width: 16, height: 16 },
       },
         h('path', { d: 'M12 5v14' }),
         h('path', { d: 'M5 12h14' }));
+    }
+
+    function SendGlyph() {
+      return h('svg', {
+        viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
+        'stroke-width': 2.1, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+        'aria-hidden': true,
+      },
+        h('path', { d: 'M12 19V5' }),
+        h('path', { d: 'm5 12 7-7 7 7' }));
     }
 
     const IMAGE_MEDIA_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
@@ -274,7 +285,7 @@ window.__ModuleLoader__.load({
 
     /** Attachment rail: original attachments (read-only, carried over) plus
      * added drafts (removable chips with local previews) and the add button. */
-    function AttachmentRail({ blocks, sessionId, drafts, uploading, onAdd, onRemove, t }) {
+    function AttachmentRail({ blocks, sessionId, drafts, uploading, onRemove, t }) {
       const images = blocks.filter((block) => block.type === 'image');
       const files = blocks.filter((block) => block.type === 'file');
       const [, setRevision] = React.useState(0);
@@ -308,7 +319,7 @@ window.__ModuleLoader__.load({
         if (onRemove) onRemove(id);
       };
       const empty = !images.length && !files.length && !drafts.length;
-      if (empty && !onAdd) return null;
+      if (empty) return null;
       return h('div', {
         'data-rg-attachments': '',
         'aria-label': format(t('attachments'), images.length + imageDrafts(drafts).length, files.length + fileDrafts(drafts).length),
@@ -357,17 +368,7 @@ window.__ModuleLoader__.load({
               type: 'button', 'data-rg-remove': '', 'aria-label': t('removeAttachment'),
               title: t('removeAttachment'), disabled: uploading, onClick: removeChip(draft.id),
             }, '×'));
-        }),
-        onAdd && !uploading
-          ? h('button', {
-              type: 'button', 'data-rg-add': '', 'aria-label': t('addAttachment'),
-              title: t('addAttachment'), onClick: (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                onAdd();
-              },
-            }, h(PlusGlyph), t('addAttachment'))
-          : null);
+        }));
     }
 
     function imageDrafts(drafts) {
@@ -773,8 +774,8 @@ window.__ModuleLoader__.load({
       return { parts, missing };
     }
 
-    /** Build the resubmitted prompt: edited text, the original attachments read
-     * back, and added drafts uploaded for whichever Session receives it. */
+    /** Build the regenerated prompt: edited text, the original attachments read
+     * back, and added drafts uploaded for the receiving Session. */
     async function buildContent(ctx, sourceSessionId, targetSessionId, node, text, drafts) {
       const blocks = attachmentBlocksOf(node);
       const [images, files, added] = await Promise.all([
@@ -811,27 +812,8 @@ window.__ModuleLoader__.load({
       }
     }
 
-    /** Branch mode (secondary option): fork just before the edited message and
-     * regenerate in the new Session. */
-    async function resubmit(ctx, sessionId, node, text, drafts) {
-      const prompt = String(text == null ? '' : text);
-      const hasAttachments = attachmentBlocksOf(node).length > 0 || (drafts && drafts.length > 0);
-      if (!prompt.trim() && !hasAttachments) throw new Error('empty');
-      const fork = { sessionId, increaseTitle: true };
-      // Fork just BEFORE the user message: the child then contains a clean
-      // prefix and exactly one (re)submitted prompt. Cutting at the message
-      // itself would leave the original prompt in the seed and duplicate it.
-      const seq = node && node.data && node.data.seq;
-      if (typeof seq === 'number') fork.atSeq = seq > 0 ? seq - 1 : seq;
-      const childId = await ctx.sessions.fork(fork);
-      try { ctx.uiWorkspace.openSession(childId); } catch (_error) { /* keep going */ }
-      const built = await buildContent(ctx, sessionId, childId, node, prompt, drafts);
-      await sendPrompt(ctx, childId, built.content);
-      return { childId, missing: built.missing };
-    }
-
-    /** Default: keep this Session and append the edited text as a new prompt,
-     * so the model regenerates its answer here. */
+    /** Regenerate: append the original or edited prompt in this Session, so the
+     * model answers again here. The session log stays append-only. */
     async function appendInSession(ctx, sessionId, node, text, drafts) {
       const prompt = String(text == null ? '' : text);
       const hasAttachments = attachmentBlocksOf(node).length > 0 || (drafts && drafts.length > 0);
@@ -859,7 +841,7 @@ window.__ModuleLoader__.load({
         setBusy(true);
         setError('');
         try {
-          const outcome = await resubmit(CTX, props.sessionId, node, textOf(node));
+          const outcome = await appendInSession(CTX, props.sessionId, node, textOf(node));
           if (outcome.missing) setError(t('attachmentsMissing'));
         } catch (cause) {
           setError((cause && cause.message) || t('failed'));
@@ -868,8 +850,8 @@ window.__ModuleLoader__.load({
         }
       };
 
-      const label = busy ? t('branching')
-        : counts.total > 0 ? format(t('branchRegenerateAttachments'), counts.total) : t('branchRegenerate');
+      const label = busy ? t('regenerating')
+        : counts.total > 0 ? format(t('attachments'), counts.images, counts.files) : t('regenerate');
       return h(ActionButton, {
         label, icon: 'regenerate', disabled: busy, busy, error, onClick: run,
       });
@@ -1021,16 +1003,14 @@ window.__ModuleLoader__.load({
         setEditing(false);
         setError('');
       };
-      const submit = async (mode) => {
+      const submit = async () => {
         if (busy) return;
         if (!text.trim() && !blocks.length && !drafts.length) { setError(t('emptyPrompt')); return; }
         if (!node) { setError(t('noPrompt')); return; }
-        setBusyMode(mode);
+        setBusyMode('append');
         setError('');
         try {
-          const outcome = mode === 'append'
-            ? await appendInSession(CTX, props.sessionId, node, text, drafts)
-            : await resubmit(CTX, props.sessionId, node, text, drafts);
+          const outcome = await appendInSession(CTX, props.sessionId, node, text, drafts);
           if (outcome.missing) setError(t('attachmentsMissing'));
           else {
             setDrafts((current) => {
@@ -1052,7 +1032,6 @@ window.__ModuleLoader__.load({
               blocks, sessionId: props.sessionId, t,
               drafts,
               uploading: busy,
-              onAdd: () => { if (inputRef.current) inputRef.current.click(); },
               onRemove: removeDraft,
             }),
             h('input', {
@@ -1060,34 +1039,44 @@ window.__ModuleLoader__.load({
               'aria-hidden': true, tabIndex: -1,
               onChange: (event) => { addFiles(event.target.files); event.target.value = ''; },
             }),
-            knobsAvailable(props.sessionId)
-              ? h('div', { 'data-rg-knobs': '' },
-                  h(PermissionPicker, { sessionId: props.sessionId, busy, t }),
-                  h(ModelPicker, { sessionId: props.sessionId, busy, t }))
-              : null,
             h('textarea', {
               value: text, 'aria-label': t('editHint'), spellCheck: false, autoFocus: true,
               onChange: (event) => setText(event.target.value),
               onKeyDown: (event) => {
                 if (event.key === 'Escape') { event.preventDefault(); cancel(); }
-                if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); submit('append'); }
+                if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); submit(); }
               },
             }),
-            h('div', { 'data-rg-buttons': '' },
-              h('span', { 'data-rg-hint': '' }, t('editorHint')),
-              error ? h('span', { 'data-rg-error': '', role: 'status' }, error) : null,
-              h(TextButton, { label: t('cancel'), onClick: cancel, disabled: busy }),
-              h(TextButton, {
-                label: busyMode === 'branch' ? t('branching') : t('branchRegenerate'),
-                hint: t('branchRegenerateHint'),
-                onClick: () => submit('branch'), disabled: busy,
-              }),
-              h(TextButton, {
-                label: busyMode === 'append' ? t('regenerating') : t('regenerate'),
-                hint: t('regenerateHint'),
-                onClick: () => submit('append'), disabled: busy, primary: true,
-              })))
+            h('div', { 'data-rg-controls': '', 'aria-label': t('editorHint') },
+              h('div', { 'data-rg-left': '' },
+                h('button', {
+                  type: 'button', 'data-rg-add': '', 'aria-label': t('addAttachment'),
+                  title: t('addAttachment'), disabled: busy,
+                  onClick: (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (inputRef.current) inputRef.current.click();
+                  },
+                }, h(PlusGlyph)),
+                knobsAvailable(props.sessionId)
+                  ? h(PermissionPicker, { sessionId: props.sessionId, busy, t })
+                  : null),
+              h('div', { 'data-rg-right': '' },
+                error ? h('span', { 'data-rg-errorline': '', role: 'status' }, error) : null,
+                knobsAvailable(props.sessionId)
+                  ? h(ModelPicker, { sessionId: props.sessionId, busy, t })
+                  : null,
+                h('button', {
+                  type: 'button', 'data-rg-send': '',
+                  'data-rg-busy': busy ? '' : undefined,
+                  'aria-label': busy ? t('regenerating') : t('regenerate'),
+                  title: busy ? t('regenerating') : t('regenerateHint'),
+                  disabled: busy,
+                  onClick: (event) => { event.preventDefault(); event.stopPropagation(); submit(); },
+                }, h(SendGlyph)),
+                h(TextButton, { label: t('cancel'), onClick: cancel, disabled: busy }))))
         : null;
+
 
       const showFallback = !editing && !actionsRow;
       const editAction = h(ActionButton, { label: t('edit'), icon: 'edit', onClick: openEditor });
