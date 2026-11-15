@@ -37,6 +37,9 @@ window.__ModuleLoader__.load({
       'removeAttachment': 'Remove',
       'permission': 'Mode',
       'model': 'Model',
+      'menuModel': 'Model',
+      'menuEffort': 'Reasoning effort',
+      'effortDefault': 'Provider default',
       'knobFailed': 'Change failed',
       'sessionBusy': 'The chat is busy — try again after the current turn finishes',
       'confirmEnable': 'Enable',
@@ -63,6 +66,9 @@ window.__ModuleLoader__.load({
       'removeAttachment': '移除',
       'permission': '运行模式',
       'model': '模型',
+      'menuModel': '模型',
+      'menuEffort': '推理级别',
+      'effortDefault': '模型默认',
       'knobFailed': '修改失败',
       'sessionBusy': '对话正在运行，请等当前回合结束后再试',
       'confirmEnable': '启用',
@@ -121,6 +127,14 @@ window.__ModuleLoader__.load({
 [data-rg-knob-item]{display:flex;flex-direction:column;gap:1px;padding:6px 8px;border:none;border-radius:var(--dsw-radius-sm,7px);background:transparent;color:var(--dsw-alias-label-primary,inherit);font:inherit;font-size:12px;line-height:16px;text-align:left;cursor:pointer;}
 [data-rg-knob-item]:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));}
 [data-rg-knob-item][data-rg-active]{color:var(--dsw-alias-brand-primary,#4c8dff);}
+[data-rg-knob-cell]{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border:none;border-radius:var(--dsw-radius-sm,7px);background:transparent;color:var(--dsw-alias-label-primary,inherit);font:inherit;font-size:12.5px;line-height:18px;text-align:left;cursor:pointer;}
+[data-rg-knob-cell]:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));}
+[data-rg-knob-cell-label]{flex:1;min-width:0;color:var(--dsw-alias-label-secondary,inherit);}
+[data-rg-knob-cell-value]{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dsw-alias-label-primary,inherit);}
+[data-rg-knob-cell-chevron]{flex:none;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));}
+[data-rg-knob-back]{display:flex;align-items:center;gap:6px;width:100%;padding:6px 8px;border:none;border-radius:var(--dsw-radius-sm,7px);background:transparent;color:var(--dsw-alias-label-secondary,inherit);font:inherit;font-size:12px;line-height:16px;text-align:left;cursor:pointer;}
+[data-rg-knob-back]:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));}
+[data-rg-knob-back-arrow]{color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));}
 [data-rg-knob-detail]{font-size:11px;line-height:14px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));}
 [data-rg-knob-head]{padding:6px 8px 2px;font-size:10.5px;line-height:14px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));text-transform:uppercase;letter-spacing:.04em;}
 [data-rg-add]{display:grid;place-items:center;flex:none;width:28px;height:28px;padding:0;border:none;border-radius:999px;background:var(--dsw-specific-selector,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));color:var(--dsw-alias-label-primary,inherit);font:inherit;cursor:pointer;}
@@ -426,46 +440,6 @@ window.__ModuleLoader__.load({
       } catch (_error) { return false; }
     }
 
-    /** Shared dropdown: trigger chip + menu list, closes on outside clicks. */
-    function KnobMenu({ label, effort, title, items, activeId, onPick, busy }) {
-      const [open, setOpen] = React.useState(false);
-      React.useEffect(() => {
-        if (!open) return undefined;
-        const close = (event) => {
-          const target = event.target;
-          if (target && typeof target.closest === 'function'
-            && target.closest('[data-rg-knob]')) return;
-          setOpen(false);
-        };
-        document.addEventListener('click', close, true);
-        return () => document.removeEventListener('click', close, true);
-      }, [open]);
-      return h('div', { 'data-rg-knob': '' },
-        h('button', {
-          type: 'button', 'data-rg-knob-trigger': '', 'aria-haspopup': 'listbox',
-          'aria-expanded': open ? 'true' : 'false',
-          disabled: Boolean(busy),
-          title, onClick: (event) => { event.preventDefault(); event.stopPropagation(); setOpen(!open); },
-        }, label, h(ChevronGlyph)),
-        open ? h('div', { 'data-rg-knob-menu': '', role: 'listbox' },
-          items.map((item) => (item.heading
-            ? h('span', { 'data-rg-knob-head': '', key: 'h-' + item.id }, item.label)
-            : h('button', {
-                type: 'button', 'data-rg-knob-item': '', role: 'option',
-                'data-rg-active': item.id === activeId ? '' : undefined,
-                'aria-selected': item.id === activeId ? 'true' : 'false',
-                key: item.id, title: item.detail || undefined,
-                onClick: (event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onPick(item);
-                },
-              },
-              h('span', null, item.label),
-              item.detail ? h('span', { 'data-rg-knob-detail': '' }, item.detail) : null))))
-          : null);
-    }
-
     function KnobError({ error }) {
       return error ? h('span', { 'data-rg-error': '', role: 'status' }, error) : null;
     }
@@ -475,12 +449,15 @@ window.__ModuleLoader__.load({
       return /writer-held/i.test(message) ? t('sessionBusy') : t('knobFailed') + (message ? ' — ' + message : '');
     }
 
-    /** Model seat: the composer's conversation.input.model. */
+    /** Model seat: the composer's conversation.input.model — a root pane with
+     * Model / Effort drill rows, the model list, and the effort list. */
     function ModelPicker({ sessionId, busy, t }) {
       const selection = useProjection(sessionId, 'modelSelection');
       const [catalog, setCatalog] = React.useState(null);
       const [error, setError] = React.useState('');
       const [pending, setPending] = React.useState(null);
+      const [open, setOpen] = React.useState(false);
+      const [pane, setPane] = React.useState('root');
       const current = selection && selection.next ? selection.next : null;
       React.useEffect(() => {
         let alive = true;
@@ -491,21 +468,25 @@ window.__ModuleLoader__.load({
       }, []);
       const groups = catalog && Array.isArray(catalog.groups) ? catalog.groups : [];
       if (!groups.length || !selection) return null;
-      const findLabel = (sel) => {
-        if (!sel) return null;
-        const group = groups.find((entry) => entry.id === sel.provider);
-        const model = group ? group.models.find((entry) => entry.id === sel.model) : undefined;
-        return model ? model.name : null;
+      const currentGroup = current ? groups.find((entry) => entry.id === current.provider) : undefined;
+      const currentModel = currentGroup
+        ? currentGroup.models.find((entry) => entry.id === current.model)
+        : undefined;
+      const reasoning = currentModel && currentModel.reasoning;
+      const effectiveEffort = current && current.reasoningEffort !== undefined
+        ? current.reasoningEffort
+        : (reasoning && reasoning.defaultEffort !== undefined ? reasoning.defaultEffort : undefined);
+      const effortLabelOf = () => {
+        if (!reasoning) return undefined;
+        if (effectiveEffort === undefined) return t('effortDefault');
+        const level = (reasoning.efforts || []).find((item) => item.id === effectiveEffort);
+        return level ? level.name : (effectiveEffort.charAt(0).toUpperCase() + effectiveEffort.slice(1));
       };
-      const activeId = current ? current.provider + '/' + current.model : undefined;
-      const label = pending
-        ? '… ' + (pending.label || '')
-        : (findLabel(current) || (current ? current.provider + '/' + current.model : t('model')));
-      const submitModel = async (item, reasoningEffort) => {
-        setPending(item);
+      const submitModel = async (route, reasoningEffort) => {
+        setPending(route);
         setError('');
         try {
-          const request = { sessionId, provider: item.providerId, model: item.modelId };
+          const request = { sessionId, provider: route.providerId, model: route.modelId };
           if (reasoningEffort !== undefined) request.reasoningEffort = reasoningEffort;
           const result = await CTX.remote.session.selectModel(request, new AbortController().signal);
           if (!result || result.ok !== true) {
@@ -517,22 +498,51 @@ window.__ModuleLoader__.load({
           setPending(null);
         }
       };
-      const pick = (item) => {
-        if (item.modelId === undefined) return;
-        if (current && current.provider === item.providerId && current.model === item.modelId) return;
-        const reasoningEffort = current
-          && current.provider === item.providerId
-          && current.model === item.modelId
-          && current.reasoningEffort !== undefined
-          ? current.reasoningEffort
-          : item.defaultEffort;
-        submitModel(item, reasoningEffort);
+      const pickModel = (item) => {
+        if (current && current.provider === item.providerId && current.model === item.modelId) {
+          setOpen(false);
+          return;
+        }
+        submitModel({ providerId: item.providerId, modelId: item.modelId }, item.defaultEffort);
       };
-      const items = [];
+      const pickEffort = (item) => {
+        if (!current) return;
+        if (effectiveEffort === item.effort) {
+          setOpen(false);
+          return;
+        }
+        submitModel({ providerId: current.provider, modelId: current.model }, item.effort);
+      };
+      // Outside clicks close; Escape backs out of a drilled pane first, then
+      // closes — the same discipline as the composer's model seat.
+      React.useEffect(() => {
+        if (!open) return undefined;
+        const close = (event) => {
+          const target = event.target;
+          if (target && typeof target.closest === 'function'
+            && target.closest('[data-rg-knob]')) return;
+          setOpen(false);
+          setPane('root');
+        };
+        const keys = (event) => {
+          if (event.key !== 'Escape') return;
+          event.preventDefault();
+          event.stopPropagation();
+          if (pane !== 'root') setPane('root');
+          else setOpen(false);
+        };
+        document.addEventListener('click', close, true);
+        document.addEventListener('keydown', keys, true);
+        return () => {
+          document.removeEventListener('click', close, true);
+          document.removeEventListener('keydown', keys, true);
+        };
+      }, [open, pane]);
+      const modelItems = [];
       for (const group of groups) {
-        items.push({ id: 'h-' + group.id, heading: true, label: group.name || group.id });
+        modelItems.push({ id: 'h-' + group.id, heading: true, label: group.name || group.id });
         for (const model of group.models) {
-          items.push({
+          modelItems.push({
             id: group.id + '/' + model.id,
             providerId: group.id,
             modelId: model.id,
@@ -542,15 +552,85 @@ window.__ModuleLoader__.load({
           });
         }
       }
+      const effortItems = reasoning ? [
+        ...(reasoning.defaultEffort === undefined
+          ? [{ id: 'effort-default', effort: undefined, label: t('effortDefault') }]
+          : []),
+        ...(reasoning.efforts || []).map((level) => ({
+          id: 'effort-' + level.id,
+          effort: level.id,
+          label: level.name,
+          detail: level.description || undefined,
+        })),
+      ] : [];
+      const activeModelId = current ? current.provider + '/' + current.model : undefined;
+      const activeEffortId = effectiveEffort === undefined ? 'effort-default' : 'effort-' + effectiveEffort;
+      const modelLabel = pending ? '\u2026 ' + (pending.label || '')
+        : (currentModel ? currentModel.name : (current ? current.provider + '/' + current.model : t('model')));
+      const effortText = effortLabelOf();
+      const knobRow = (item, activeId) => h('button', {
+        type: 'button', 'data-rg-knob-item': '', role: 'menuitemradio',
+        'data-rg-active': item.id === activeId ? '' : undefined,
+        'aria-checked': item.id === activeId ? 'true' : 'false',
+        key: item.id, title: item.detail || undefined,
+        onClick: (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (item.heading) return;
+          if (pane === 'model') pickModel(item);
+          else pickEffort(item);
+        },
+      },
+        h('span', null, item.label),
+        item.detail ? h('span', { 'data-rg-knob-detail': '' }, item.detail) : null);
       return h('div', { 'data-rg-knob': '' },
-        h(KnobMenu, {
-          label, title: t('model'),
-          busy: busy || pending !== null,
-          items, activeId, onPick: pick,
-        }),
+        h('button', {
+          type: 'button', 'data-rg-knob-trigger': '', 'aria-haspopup': 'menu',
+          'aria-expanded': open ? 'true' : 'false',
+          disabled: Boolean(busy) || pending !== null,
+          title: t('model'), onClick: (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setPane('root');
+            setOpen(!open);
+          },
+        },
+          pending ? '\u2026 ' + (pending.label || '') : modelLabel,
+          !pending && effortText ? h('span', { 'data-rg-effort': '' }, effortText) : null),
+        open ? h('div', { 'data-rg-knob-menu': '', role: 'menu' },
+          pane === 'root'
+            ? [
+                h('button', {
+                  type: 'button', 'data-rg-knob-cell': '', role: 'menuitem', key: 'cell-model',
+                  onClick: (event) => { event.preventDefault(); event.stopPropagation(); setPane('model'); },
+                },
+                  h('span', { 'data-rg-knob-cell-label': '' }, t('menuModel')),
+                  h('span', { 'data-rg-knob-cell-value': '' }, modelLabel),
+                  h('span', { 'data-rg-knob-cell-chevron': '' }, '\u203a')),
+                reasoning
+                  ? h('button', {
+                      type: 'button', 'data-rg-knob-cell': '', role: 'menuitem', key: 'cell-effort',
+                      onClick: (event) => { event.preventDefault(); event.stopPropagation(); setPane('effort'); },
+                    },
+                      h('span', { 'data-rg-knob-cell-label': '' }, t('menuEffort')),
+                      h('span', { 'data-rg-knob-cell-value': '' }, effortText || ''),
+                      h('span', { 'data-rg-knob-cell-chevron': '' }, '\u203a'))
+                  : null,
+              ]
+            : [
+                h('button', {
+                  type: 'button', 'data-rg-knob-back': '', key: 'back',
+                  onClick: (event) => { event.preventDefault(); event.stopPropagation(); setPane('root'); },
+                },
+                  h('span', { 'data-rg-knob-back-arrow': '' }, '\u2039'),
+                  pane === 'model' ? t('menuModel') : t('menuEffort')),
+                pane === 'model'
+                  ? modelItems.map((item) => knobRow(item, activeModelId))
+                  : effortItems.map((item) => knobRow(item, activeEffortId)),
+              ])
+          : null,
         h(KnobError, { error }));
     }
-
     /** Ordered ChatNode list from a `useChat` snapshot. */
     function nodeList(snapshot) {
       if (!snapshot) return [];
