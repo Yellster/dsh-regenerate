@@ -109,30 +109,32 @@ window.__ModuleLoader__.load({
 [data-rg-add]{display:inline-flex;align-items:center;justify-content:center;flex:none;width:28px;height:28px;padding:0;border:none;border-radius:50%;background:transparent;color:var(--dsw-alias-label-secondary,inherit);font:inherit;cursor:pointer;}
 [data-rg-add]:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));color:var(--dsw-alias-label-primary,inherit);}
 [data-rg-add] svg{width:16px;height:16px;display:block;}
-[data-rg-controls]{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-[data-rg-controls] [data-rg-left]{display:flex;align-items:center;gap:4px;min-width:0;}
-[data-rg-controls] [data-rg-right]{display:flex;align-items:center;gap:8px;margin-left:auto;min-width:0;}
+[data-rg-controls]{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+[data-rg-controls] [data-rg-left]{display:flex;align-items:center;gap:12px;min-width:0;}
+[data-rg-controls] [data-rg-right]{display:flex;align-items:center;gap:12px;margin-left:auto;min-width:0;}
 [data-rg-knob]{position:relative;}
-[data-rg-knob-trigger]{display:inline-flex;align-items:center;gap:6px;max-width:260px;height:26px;padding:0 9px;border:1px solid var(--dsw-alias-border-l1,rgba(127,127,127,.3));border-radius:var(--dsw-radius-lg,12px);background:transparent;color:var(--dsw-alias-label-secondary,inherit);font:inherit;font-size:11.5px;line-height:16px;white-space:nowrap;cursor:pointer;}
-[data-rg-knob-trigger]:hover:not([disabled]){background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));color:var(--dsw-alias-label-primary,inherit);}
-[data-rg-knob-trigger][disabled]{opacity:.45;cursor:default;}
-[data-rg-knob-trigger] svg{width:10px;height:10px;flex:none;display:block;}
-[data-rg-knob-menu]{position:absolute;bottom:calc(100% + 6px);left:0;z-index:40;min-width:230px;max-width:320px;max-height:300px;overflow:auto;padding:4px;border:1px solid var(--dsw-alias-border-l2,rgba(127,127,127,.3));border-radius:var(--dsw-radius-lg,12px);background:var(--dsw-alias-bg-layer-1,rgba(127,127,127,.06));box-shadow:0 8px 24px rgba(0,0,0,.28);display:flex;flex-direction:column;gap:1px;}
+[data-rg-knob-trigger]{display:inline-flex;align-items:center;max-width:220px;height:28px;padding:0 20px 0 8px;border:none;border-radius:var(--dsw-radius-sm,7px);outline:none;background-color:transparent;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2381858C' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 4px center;background-size:12px 12px;color:var(--dsw-alias-label-secondary,inherit);font:inherit;font-size:13px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer;appearance:none;}
+[data-rg-knob-trigger]:hover:not([disabled]){background-color:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));}
+[data-rg-knob-trigger][disabled]{opacity:.5;cursor:default;}
+[data-rg-knob-trigger] [data-rg-effort]{margin-left:4px;font-weight:600;}
+[data-rg-knob-menu]{position:absolute;bottom:calc(100% + 6px);right:0;z-index:40;min-width:230px;max-width:320px;max-height:300px;overflow:auto;padding:4px;border:1px solid var(--dsw-alias-border-l2,rgba(127,127,127,.3));border-radius:var(--dsw-radius-lg,12px);background:var(--dsw-alias-bg-layer-1,rgba(127,127,127,.06));box-shadow:0 8px 24px rgba(0,0,0,.28);display:flex;flex-direction:column;gap:1px;}
 [data-rg-knob-item]{display:flex;flex-direction:column;gap:1px;padding:6px 8px;border:none;border-radius:var(--dsw-radius-sm,7px);background:transparent;color:var(--dsw-alias-label-primary,inherit);font:inherit;font-size:12px;line-height:16px;text-align:left;cursor:pointer;}
 [data-rg-knob-item]:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));}
 [data-rg-knob-item][data-rg-active]{color:var(--dsw-alias-brand-primary,#4c8dff);}
 [data-rg-knob-detail]{font-size:11px;line-height:14px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));}
 [data-rg-knob-head]{padding:6px 8px 2px;font-size:10.5px;line-height:14px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));text-transform:uppercase;letter-spacing:.04em;}
-[data-rg-knob-confirm]{display:flex;flex-direction:column;gap:6px;padding:8px;border:1px solid var(--dsw-alias-state-warning-primary,rgba(230,180,60,.5));border-radius:var(--dsw-radius-sm,7px);margin:2px;}
-[data-rg-knob-confirm] span{font-size:11.5px;line-height:15px;color:var(--dsw-alias-label-primary,inherit);}
-[data-rg-knob-confirm] div{display:flex;gap:6px;justify-content:flex-end;}
-[data-rg-send]{display:inline-flex;align-items:center;justify-content:center;flex:none;width:32px;height:32px;padding:0;border:none;border-radius:50%;background:var(--dsw-alias-brand-primary,#4c8dff);color:#fff;cursor:pointer;}
-[data-rg-send]:hover:not([disabled]){opacity:.88;}
-[data-rg-send]:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4c8dff);outline-offset:1px;}
-[data-rg-send][disabled]{opacity:.45;cursor:default;}
+[data-rg-add]{display:grid;place-items:center;flex:none;width:28px;height:28px;padding:0;border:none;border-radius:999px;background:var(--dsw-specific-selector,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));color:var(--dsw-alias-label-primary,inherit);font:inherit;cursor:pointer;}
+[data-rg-add]:hover:not([disabled]){background:var(--dsw-alias-interactive-bg-hover-solid,var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.2))));}
+[data-rg-add][disabled]{opacity:.5;cursor:default;}
+[data-rg-add] svg{width:16px;height:16px;display:block;}
+[data-rg-send]{display:grid;place-items:center;flex:none;width:34px;height:34px;padding:0;border:none;border-radius:999px;background:var(--dsw-alias-button-info-fill,#3964FE);color:var(--dsw-alias-label-on-color,#fff);cursor:pointer;transition:background-color 100ms ease;transform:translateY(-2px);}
+[data-rg-send]:hover:not([disabled]){background:var(--dsw-alias-button-info-hover,#679EFE);}
+[data-rg-send]:focus-visible{outline:2px solid var(--dsw-alias-button-info-fill,#3964FE);outline-offset:1px;}
+[data-rg-send][disabled]{opacity:.4;cursor:default;}
+[data-rg-send][data-rg-busy]{opacity:1;cursor:progress;}
+[data-rg-send][data-rg-busy] svg{animation:rg-spin 800ms linear infinite;}
 [data-rg-send] svg{width:16px;height:16px;display:block;}
-[data-rg-send][data-rg-busy] svg{animation:rg-spin .9s linear infinite;}
-@media (prefers-reduced-motion:reduce){[data-rg-send][data-rg-busy] svg{animation:none;}}
+@media (prefers-reduced-motion:reduce){[data-rg-send][data-rg-busy] svg{animation-duration:2400ms;}}
 [data-rg-errorline]{font-size:11px;line-height:16px;color:var(--dsw-alias-state-error-primary,#e5534b);}
 [data-rg-error]{font-size:11px;line-height:16px;color:var(--dsw-alias-state-error-primary,#e5534b);}
 `;
@@ -425,7 +427,7 @@ window.__ModuleLoader__.load({
     }
 
     /** Shared dropdown: trigger chip + menu list, closes on outside clicks. */
-    function KnobMenu({ label, title, items, activeId, onPick, busy }) {
+    function KnobMenu({ label, effort, title, items, activeId, onPick, busy }) {
       const [open, setOpen] = React.useState(false);
       React.useEffect(() => {
         if (!open) return undefined;
@@ -471,88 +473,6 @@ window.__ModuleLoader__.load({
     function describeKnobError(cause, t) {
       const message = cause && cause.message ? String(cause.message) : '';
       return /writer-held/i.test(message) ? t('sessionBusy') : t('knobFailed') + (message ? ' — ' + message : '');
-    }
-
-    /** Permission preset seat: the composer's conversation.input.permission. */
-    function PermissionPicker({ sessionId, busy, t }) {
-      const selection = useProjection(sessionId, 'permissions');
-      const [catalog, setCatalog] = React.useState(null);
-      const [error, setError] = React.useState('');
-      const [pending, setPending] = React.useState(null);
-      const [confirming, setConfirming] = React.useState(null);
-      React.useEffect(() => {
-        let alive = true;
-        CTX.remote.permissionPresets.catalog().then((result) => {
-          if (alive && result && result.ok) setCatalog(result.value);
-        }).catch(() => { /* no catalog: seat stays hidden */ });
-        return () => { alive = false; };
-      }, []);
-      const options = catalog && Array.isArray(catalog.options) ? catalog.options : [];
-      if (!options.length || !selection || typeof selection.currentValue !== 'string') return null;
-      const current = options.find((option) => option.value === selection.currentValue);
-      const label = current ? current.name : selection.currentValue;
-      const submitPreset = async (value) => {
-        setPending(value);
-        setError('');
-        try {
-          const result = await CTX.remote.commands.execute(sessionId, '/permission ' + value, []);
-          if (!result || result.ok !== true) {
-            throw new Error(result && result.error ? result.error.message : 'rejected');
-          }
-          const outcome = result.value && result.value.result;
-          if (outcome && outcome.kind === 'error') throw new Error(outcome.text || 'failed');
-        } catch (cause) {
-          setError(describeKnobError(cause, t));
-        } finally {
-          setPending(null);
-        }
-      };
-      const pick = (item) => {
-        if (item.id === selection.currentValue) return;
-        if (item.id === FULL_ACCESS_PRESET || item.id === AUTO_REVIEW_PRESET) {
-          setConfirming(item.id);
-          return;
-        }
-        submitPreset(item.id);
-      };
-      const confirmingOption = options.find((option) => option.value === confirming);
-      const confirmTitle = confirming === AUTO_REVIEW_PRESET ? t('autoTitle') : t('fullAccessTitle');
-      const confirmBody = confirmingOption && confirmingOption.description
-        ? confirmingOption.description
-        : (confirming === AUTO_REVIEW_PRESET ? t('autoBody') : t('fullAccessBody'));
-      return h('div', { 'data-rg-knob': '' },
-        h(KnobMenu, {
-          label: (pending ? '… ' : '') + label,
-          title: current && current.description ? current.description : undefined,
-          busy: busy || pending !== null,
-          items: options.map((option) => ({
-            id: option.value,
-            label: option.name,
-            detail: option.description || undefined,
-          })),
-          activeId: selection.currentValue,
-          onPick: pick,
-        }),
-        confirming
-          ? h('div', { 'data-rg-knob-confirm': '', role: 'alertdialog', 'aria-label': confirmTitle },
-              h('span', null, confirmTitle + ' ' + confirmBody),
-              h('div', null,
-                h('button', {
-                  type: 'button', 'data-rg-action': '', 'data-rg-text': '',
-                  onClick: (event) => { event.preventDefault(); event.stopPropagation(); setConfirming(null); },
-                }, t('confirmCancel')),
-                h('button', {
-                  type: 'button', 'data-rg-action': '', 'data-rg-text': '', 'data-rg-primary': '',
-                  onClick: (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    const value = confirming;
-                    setConfirming(null);
-                    if (value) submitPreset(value);
-                  },
-                }, t('confirmEnable'))))
-          : null,
-        h(KnobError, { error }));
     }
 
     /** Model seat: the composer's conversation.input.model. */
@@ -1048,19 +968,15 @@ window.__ModuleLoader__.load({
               },
             }),
             h('div', { 'data-rg-controls': '', 'aria-label': t('editorHint') },
-              h('div', { 'data-rg-left': '' },
-                h('button', {
-                  type: 'button', 'data-rg-add': '', 'aria-label': t('addAttachment'),
-                  title: t('addAttachment'), disabled: busy,
-                  onClick: (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    if (inputRef.current) inputRef.current.click();
-                  },
-                }, h(PlusGlyph)),
-                knobsAvailable(props.sessionId)
-                  ? h(PermissionPicker, { sessionId: props.sessionId, busy, t })
-                  : null),
+              h('button', {
+                type: 'button', 'data-rg-add': '', 'aria-label': t('addAttachment'),
+                title: t('addAttachment'), disabled: busy,
+                onClick: (event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  if (inputRef.current) inputRef.current.click();
+                },
+              }, h(PlusGlyph)),
               h('div', { 'data-rg-right': '' },
                 error ? h('span', { 'data-rg-errorline': '', role: 'status' }, error) : null,
                 knobsAvailable(props.sessionId)
@@ -1073,8 +989,7 @@ window.__ModuleLoader__.load({
                   title: busy ? t('regenerating') : t('regenerateHint'),
                   disabled: busy,
                   onClick: (event) => { event.preventDefault(); event.stopPropagation(); submit(); },
-                }, h(SendGlyph)),
-                h(TextButton, { label: t('cancel'), onClick: cancel, disabled: busy }))))
+                }, h(SendGlyph)))))
         : null;
 
 
@@ -1097,7 +1012,7 @@ window.__ModuleLoader__.load({
 
     return {
       name: 'dsh-regenerate',
-      inject: ['slots', 'locale', 'sessions', 'uiConversation', 'uiWorkspace', 'remote', 'remote.session', 'remote.permissionPresets', 'remote.commands'],
+      inject: ['slots', 'locale', 'sessions', 'uiConversation', 'uiWorkspace', 'remote', 'remote.session'],
       apply(ctx) {
         CTX = ctx;
         ctx.effect(() => ctx.locale.register(NS, {
