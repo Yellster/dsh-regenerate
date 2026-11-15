@@ -2,7 +2,11 @@
   "name": "dsh-regenerate",
   "version": "1.0.0",
   "description": "Regenerate assistant answers and edit/resend sent user prompts in the DSH conversation.",
-  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yellster/dsh-regenerate.git"
+  },
   "type": "module",
   "exports": {
     ".": "./index.js",

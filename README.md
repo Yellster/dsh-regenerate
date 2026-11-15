@@ -38,6 +38,8 @@ The editor renders a **read-only attachment rail** above the textarea, mirroring
 | `client.js` | Browser half: slot registrations, buttons, inline editor, styles |
 | `locale/*.json` | Display metadata and UI labels (English / Chinese) |
 | `icon.svg` | Original plugin icon |
+| `index.json` | Plugin market index (format 1) for the Discover tab |
+| `LICENSE` | MIT license |
 
 ## Platform notes / known limitations
 
@@ -50,4 +52,27 @@ The editor renders a **read-only attachment rail** above the textarea, mirroring
 
 ## Install
 
-`plugin_manager` → `install_bundle` with the absolute path to this directory. After installation a page refresh loads the new browser module.
+In DSH, open **Plugins → Add plugin** and use any of these sources:
+
+- **GitHub** — paste `https://github.com/Yellster/dsh-regenerate` and install.
+- **Plugin index** — with the *Custom plugin indexes* plugin enabled, add
+  `https://raw.githubusercontent.com/Yellster/dsh-regenerate/main/index.json`
+  under **Plugins → Discover** and install *Regenerate and edit prompts* from
+  there. Versions pinned to a commit support in-place updates.
+- **Local directory** — paste the absolute path of a checkout of this repository,
+  or call `plugin_manager` → `install_bundle` with that path.
+
+After installation a page refresh loads the new browser module.
+
+## Publishing
+
+Maintainer notes for releasing a new version:
+
+1. Bump `version` in `package.json`, then commit and push.
+2. **npm** — `npm login` once, then `npm publish`; the `files` whitelist is
+   already configured and no build step is needed. Once published, users can
+   also install by typing `dsh-regenerate` in the Add plugin dialog.
+3. **Plugin index** — prepend a new entry to `versions` in `index.json` with the
+   new version, the release commit's full 40-character SHA, and its publish time
+   in Unix seconds, then commit and push. Git entries must stay pinned to a full
+   commit SHA to remain updatable.
