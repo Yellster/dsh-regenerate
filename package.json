@@ -7,6 +7,9 @@
     "type": "git",
     "url": "git+https://github.com/Yellster/dsh-regenerate.git"
   },
+  "engines": {
+    "dsh": ">=0.2.0"
+  },
   "type": "module",
   "exports": {
     ".": "./index.js",
