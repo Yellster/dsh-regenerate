@@ -54,6 +54,7 @@ The editor renders a **read-only attachment rail** above the textarea, mirroring
 
 In DSH, open **Plugins → Add plugin** and use any of these sources:
 
+- **npm** — type the package name `dsh-regenerate` and install.
 - **GitHub** — paste `https://github.com/Yellster/dsh-regenerate` and install.
 - **Plugin index** — with the *Custom plugin indexes* plugin enabled, add
   `https://raw.githubusercontent.com/Yellster/dsh-regenerate/main/index.json`
@@ -70,8 +71,7 @@ Maintainer notes for releasing a new version:
 
 1. Bump `version` in `package.json`, then commit and push.
 2. **npm** — `npm login` once, then `npm publish`; the `files` whitelist is
-   already configured and no build step is needed. Once published, users can
-   also install by typing `dsh-regenerate` in the Add plugin dialog.
+   already configured and no build step is needed.
 3. **Plugin index** — prepend a new entry to `versions` in `index.json` with the
    new version, the release commit's full 40-character SHA, and its publish time
    in Unix seconds, then commit and push. Git entries must stay pinned to a full
