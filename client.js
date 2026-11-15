@@ -96,7 +96,7 @@ window.__ModuleLoader__.load({
 @keyframes rg-spin{to{transform:rotate(360deg);}}
 @media (prefers-reduced-motion:reduce){[data-rg-action][data-rg-busy] [data-rg-icon]{animation:none;}}
 [data-rg-editor]{display:flex;flex-direction:column;gap:8px;box-sizing:border-box;width:100%;padding:10px 12px;border:1px solid var(--dsw-alias-border-l1,rgba(127,127,127,.28));border-radius:var(--dsw-radius-panel,var(--dsw-radius-lg,14px));background:var(--dsw-alias-bg-layer-2,rgba(127,127,127,.08));color:var(--dsw-alias-label-primary,inherit);}
-[data-rg-editor] textarea{width:100%;box-sizing:border-box;min-height:64px;resize:vertical;padding:0;border:none;background:transparent;color:inherit;font:inherit;font-size:var(--dsh-content-font-size,14px);line-height:calc(24px + var(--dsh-content-font-delta,0px));outline:none;}
+[data-rg-editor] textarea{width:100%;box-sizing:border-box;min-height:24px;max-height:min(420px,50vh);resize:none;overflow:auto;padding:0;border:none;background:transparent;color:inherit;font:inherit;font-size:var(--dsh-content-font-size,14px);line-height:calc(24px + var(--dsh-content-font-delta,0px));outline:none;}
 [data-rg-editor] textarea:focus{outline:none;}
 [data-rg-attachments]{display:flex;align-items:stretch;gap:10px;min-width:0;max-width:100%;padding:2px 0;overflow:auto hidden;scrollbar-width:none;}
 [data-rg-attachments]::-webkit-scrollbar{display:none;}
@@ -965,6 +965,17 @@ window.__ModuleLoader__.load({
       const blocks = attachmentBlocksOf(node);
       const [drafts, setDrafts] = React.useState([]);
       const inputRef = React.useRef(null);
+      const textareaRef = React.useRef(null);
+      // Auto-fit: the editor starts one line tall and grows with its content.
+      const fitTextarea = () => {
+        const el = textareaRef.current;
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
+      };
+      React.useEffect(() => {
+        if (editing) fitTextarea();
+      }, [editing, text]);
       // Mirror for unmount cleanup: revoke object URLs without a state update.
       const draftsRef = React.useRef(drafts);
       draftsRef.current = drafts;
@@ -1042,6 +1053,7 @@ window.__ModuleLoader__.load({
               onChange: (event) => { addFiles(event.target.files); event.target.value = ''; },
             }),
             h('textarea', {
+              ref: textareaRef,
               value: text, 'aria-label': t('editHint'), spellCheck: false, autoFocus: true,
               onChange: (event) => setText(event.target.value),
               onKeyDown: (event) => {
