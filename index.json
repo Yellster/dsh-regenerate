@@ -35,7 +35,7 @@
           "source": {
             "type": "git",
             "url": "https://github.com/Yellster/dsh-regenerate",
-            "commit": "9ba789d30d3e341698a3ffbc7ee2d5c84b8e7ae9"
+            "commit": "3db4813b579c04dbd4eadf95d1e054db6867a5b6"
           },
           "engines": {
             "dsh": ">=0.2.0"
