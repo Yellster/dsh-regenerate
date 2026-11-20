@@ -34,7 +34,7 @@ function loadClient(overrides = {}) {
   vm.createContext(sandbox);
   const exposed = 'nodeList, textOf, format, attachmentBlocksOf, attachmentCounts, '
     + 'userNodeFor, userNodeBySource, imageParts, fileParts, draftParts, '
-    + 'buildContent, promptPayload, sendPrompt, appendInSession, uploadDraft, '
+    + 'buildContent, promptPayload, sendPrompt, appendInSession, callRegenerateApi, uploadDraft, '
     + 'imageMediaTypeOf, newRequestId';
   const instrumented = source.replace(
     '    let CTX = null;',
@@ -326,4 +326,24 @@ test('imageMediaTypeOf accepts only the composer image types', () => {
   assert.equal(H.imageMediaTypeOf({ type: 'image/png' }), 'image/png');
   assert.equal(H.imageMediaTypeOf({ type: 'image/svg+xml' }), null);
   assert.equal(H.imageMediaTypeOf({ type: 'application/pdf' }), null);
+});
+
+test('callRegenerateApi posts to the host route and reports failure', async () => {
+  const calls = [];
+  const okH = helpers({
+    fetch: async (url, init) => {
+      calls.push({ url, init });
+      return { ok: true, json: async () => ({ ok: true, value: { regeneratedTurn: 3 } }) };
+    },
+  });
+  const ok = await okH.callRegenerateApi({}, 's-1', 3);
+  assert.equal(calls[0].url, '/api/dsh-regenerate/regenerate');
+  assert.equal(calls[0].init.credentials, 'same-origin');
+  const body = JSON.parse(calls[0].init.body);
+  assert.equal(body.sessionId, 's-1');
+  assert.equal(body.turn, 3);
+  assert.ok(ok.ok);
+  assert.equal(ok.value.regeneratedTurn, 3);
+  const down = helpers({ fetch: async () => ({ ok: false, json: async () => ({}) }) });
+  assert.deepEqual(await down.callRegenerateApi({}, 's-1'), { ok: false });
 });

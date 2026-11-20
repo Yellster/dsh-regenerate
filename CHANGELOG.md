@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Host-driven regeneration** — the answer-row icon now POSTs to `POST /api/dsh-regenerate/regenerate`, which analyses the target turn and injects a frozen `cordis-host-runner` continuation through `agent.followup()` that explicitly asks the model to disregard its previous final response. The instruction adapts to the turn's end reason and to committed assistant/tool progress, and the original attachments are rebuilt into the continuation host-side. The client falls back to the legacy append-prompt flow when the route is unavailable.
 - **Paste and drag-drop attachments in the editor** — Ctrl/Cmd+V anywhere in
   the editor card and file drops onto it feed the same draft pipeline as the
   add button (local previews, per-session receipts, removable before submit).
@@ -19,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Editor image cache is now bounded** — thumbnail data URLs are capped at 64 entries with least-recently-used eviction, and failed reads are no longer cached, so a long-lived session cannot retain every image it has rendered and transient read failures can recover.
+- **User-row click listener no longer rebinds on every keystroke** — the editor's row effect is scoped to `editing` / `node` changes instead of running after every render.
 - **Model picking failed with "expected 1 argument(s), got 2"** — the editor's
   model seat passed an `AbortSignal` to `session/selectModel`, whose remote
   takes the request only; the client api's argument-count validation rejected

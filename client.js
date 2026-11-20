@@ -251,8 +251,26 @@ window.__ModuleLoader__.load({
     }
 
     // Data URLs are stable for content-addressed attachments; reuse them when
-    // the same prompt is edited again.
+    // the same prompt is edited again. Keep the cache bounded so a long-lived
+    // session cannot retain every image it has ever rendered.
+    const THUMBNAIL_CACHE_LIMIT = 64;
     const thumbnailCache = new Map();
+
+    function rememberThumbnail(id, url) {
+      thumbnailCache.delete(id);
+      thumbnailCache.set(id, url);
+      if (thumbnailCache.size > THUMBNAIL_CACHE_LIMIT) {
+        thumbnailCache.delete(thumbnailCache.keys().next().value);
+      }
+    }
+
+    function getThumbnail(id) {
+      if (!thumbnailCache.has(id)) return undefined;
+      const url = thumbnailCache.get(id);
+      thumbnailCache.delete(id);
+      thumbnailCache.set(id, url);
+      return url;
+    }
 
     function FileGlyph() {
       return h('svg', {
@@ -366,9 +384,9 @@ window.__ModuleLoader__.load({
             for (const block of pending) {
               const ref = block.attachment;
               try {
-                thumbnailCache.set(ref.attachmentId, await readImageUrl(CTX, sessionId, ref));
+                rememberThumbnail(ref.attachmentId, await readImageUrl(CTX, sessionId, ref));
               } catch (_error) {
-                thumbnailCache.set(ref.attachmentId, null);
+                // Do not cache failures: a transient read may succeed later.
               }
               if (alive) setRevision((value) => value + 1);
             }
@@ -390,7 +408,7 @@ window.__ModuleLoader__.load({
       },
         images.map((block) => {
           const ref = block.attachment;
-          const url = thumbnailCache.get(ref.attachmentId);
+          const url = getThumbnail(ref.attachmentId);
           return h('div', {
             'data-rg-attach-item': '', key: ref.attachmentId,
             title: ref.name || undefined,
@@ -922,6 +940,26 @@ window.__ModuleLoader__.load({
       return { childId: sessionId, missing: built.missing };
     }
 
+    /** Ask the host to analyse the turn and inject a hidden continuation that
+     * tells the model to disregard its previous final answer. Falls back to
+     * the legacy append-prompt flow when an older host bundle is installed. */
+    async function callRegenerateApi(ctx, sessionId, turn) {
+      try {
+        const response = await fetch('/api/dsh-regenerate/regenerate', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            sessionId,
+            ...(Number.isSafeInteger(turn) && turn > 0 ? { turn } : {}),
+          }),
+        });
+        const data = await response.json();
+        if (response.ok && data && data.ok === true) return { ok: true, value: data.value };
+      } catch (_error) { /* older host bundle: use the client fallback */ }
+      return { ok: false };
+    }
+
     /** Regenerate action, registered into conversation.chat.assistant-actions. */
     function RegenerateButton(props) {
       const t = typeof props.t === 'function' ? props.t : (key) => en[key] || key;
@@ -940,8 +978,12 @@ window.__ModuleLoader__.load({
         setBusy(true);
         setError('');
         try {
-          const outcome = await appendInSession(CTX, props.sessionId, node, textOf(node));
-          if (outcome.missing) setError(t('attachmentsMissing'));
+          const turn = Number.isSafeInteger(props.turn) ? props.turn
+            : (node && node.data && Number.isSafeInteger(node.data.turn) ? node.data.turn : undefined);
+          const outcome = await callRegenerateApi(CTX, props.sessionId, turn);
+          if (outcome.ok) return;
+          const fallback = await appendInSession(CTX, props.sessionId, node, textOf(node));
+          if (fallback.missing) setError(t('attachmentsMissing'));
         } catch (cause) {
           setError((cause && cause.message) || t('failed'));
         } finally {
@@ -1025,7 +1067,7 @@ window.__ModuleLoader__.load({
         };
         row.addEventListener('click', handler);
         return () => row.removeEventListener('click', handler);
-      });
+      }, [editing, node]);
 
       // The host's attachment view listens for document-level 'drop' in the
       // bubble phase and would duplicate an editor-addressed drop into the
