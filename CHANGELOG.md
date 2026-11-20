@@ -5,6 +5,71 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Paste and drag-drop attachments in the editor** — Ctrl/Cmd+V anywhere in
+  the editor card and file drops onto it feed the same draft pipeline as the
+  add button (local previews, per-session receipts, removable before submit).
+  Folder members are skipped via the entry API; a mixed paste still inserts
+  its text. Capture-phase guards keep the host's document-level paste router
+  and attachment drop listeners from duplicating the intake into the bottom
+  composer.
+
+### Fixed
+
+- **Model picking failed with "expected 1 argument(s), got 2"** — the editor's
+  model seat passed an `AbortSignal` to `session/selectModel`, whose remote
+  takes the request only; the client api's argument-count validation rejected
+  every pick. Found by driving the real app: changing the model in the editor
+  surfaced "修改失败 — client api: session/selectModel expected 1
+  argument(s), got 2". A session whose selected model no longer exists (for
+  example after the model was removed from its provider) shows the raw
+  `provider/model` fallback on the chip and hides the effort seat until a
+  catalogued model is picked — picking now succeeds in exactly that state.
+
+- **Model menu opens downward** — the picker dropdown now drops below the
+  chip (matching common dropdown intuition inside the message flow) and
+  flips above it only when the viewport space below is too short.
+
+- **Model picker menu redesign** — the dropdown now matches the host
+  composer's ModelSelect card: prominent elevation, 34px option rows with a
+  trailing selection check (a pulsing dot while a pick is in flight), sticky
+  provider headings, two-line-clamped model descriptions, right-aligned
+  current values and SVG chevrons on the drill cells, and a quieter back
+  row. A drilled list opens centered on the selected entry instead of the
+  top of the catalog.
+
+- **Editor action row and keymap** — the toolbar now reads as explicit
+  actions: a borderless **+ Add attachments** chip with a text label and the
+  model chip on the left; a ghost **Cancel** and a solid info-fill
+  **Resubmit** pill on the right (replacing the circular ↑ send button).
+  **Enter** submits and **Shift+Enter** inserts a newline, matching the
+  bottom composer (Ctrl/Cmd+Enter still works; an IME composition commit
+  never submits). A caption-tone keymap line under the card shows
+  `Enter to resubmit · Shift+Enter for a new line · Esc to cancel`. The model
+  chip keeps its two-level menu with the reasoning-effort pane.
+
+- **Editor visual polish** — the in-place editor card now uses the bottom
+  composer's actual surface treatment instead of a flat bordered box: the
+  elevated input fill (`--dsw-specific-input-major`), the design-system
+  hairline stroke drawn inside the soft elevation shadow (`border: 0`), the
+  28px panel radius, and the composer's vertical rhythm. The draft area takes
+  the composer's text insets, one-line floor, shared 14-line height cap
+  (`--dsh-composer-text-max-height`), business-blue caret, themed l2 scrollbar
+  pair, and a focus-within hairline accent. The model picker menu moves from a
+  translucent wash with a hard drop shadow to the menu elevation face.
+  Attachment remove badges follow the host rail: an inset contrast-fill circle
+  revealed on hover or keyboard focus (always visible on touch) instead of an
+  overhanging badge the rail's scrollport could clip.
+
+### Removed
+
+- Dead code: the unused `TextButton` component and its CSS, a superseded
+  duplicate `+`-button rule, an unused toolbar selector, and the now-unused
+  `SendGlyph` send-arrow icon.
+
 ## [1.0.1] - 2026-11-16
 
 A refinement release: the in-place editor now matches the bottom composer, and

@@ -7,10 +7,13 @@
     "regenerate": "重新生成",
     "regenerating": "正在重新生成…",
     "edit": "编辑",
-    "editHint": "编辑提问后重新发送",
-    "send": "保存并重新发送",
+    "editHint": "编辑这条提问",
     "cancel": "取消",
     "failed": "操作失败",
-    "emptyPrompt": "提问内容不能为空"
+    "emptyPrompt": "提问内容不能为空",
+    "editorHint": "Enter 重新提交 · Shift+Enter 换行 · Esc 取消",
+    "resubmit": "重新提交",
+    "resubmitting": "正在提交…",
+    "resubmitHint": "在当前对话发送编辑后的提问，原有问答会保留在上下文里"
   }
 }

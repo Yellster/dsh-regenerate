@@ -30,7 +30,10 @@ window.__ModuleLoader__.load({
       'failed': 'Operation failed',
       'emptyPrompt': 'The prompt cannot be empty',
       'noPrompt': 'Could not find the original prompt',
-      'editorHint': 'Ctrl/⌘ + Enter to regenerate · Esc to cancel',
+      'editorHint': 'Enter to resubmit · Shift+Enter for a new line · Esc to cancel',
+      'resubmit': 'Resubmit',
+      'resubmitting': 'Resubmitting…',
+      'resubmitHint': 'Send the edited prompt in this chat; the earlier exchange stays in context',
       'attachments': 'Attachments: {0} image(s), {1} file(s)',
       'attachmentsMissing': 'Sent, but some attachments could not be carried over — add them again',
       'addAttachment': 'Add attachments',
@@ -59,7 +62,10 @@ window.__ModuleLoader__.load({
       'failed': '操作失败',
       'emptyPrompt': '提问内容不能为空',
       'noPrompt': '找不到原始提问',
-      'editorHint': 'Ctrl/⌘ + Enter 重新生成 · Esc 取消',
+      'editorHint': 'Enter 重新提交 · Shift+Enter 换行 · Esc 取消',
+      'resubmit': '重新提交',
+      'resubmitting': '正在提交…',
+      'resubmitHint': '在当前对话发送编辑后的提问，原有问答会保留在上下文里',
       'attachments': '附件：{0} 张图片、{1} 个文件',
       'attachmentsMissing': '已发送，但部分附件未能携带，请重新添加',
       'addAttachment': '添加附件',
@@ -81,74 +87,117 @@ window.__ModuleLoader__.load({
 
     const CSS = `
 [data-rg-row]{display:none;}
-[data-rg-row][data-rg-editing]{display:block;align-self:center;width:calc(100% + 32px);max-width:var(--dsh-composer-card-max-width,calc(100% + 32px));padding:0;box-sizing:border-box;}
+[data-rg-row][data-rg-editing]{display:flex;flex-direction:column;align-self:center;width:calc(100% + 32px);max-width:var(--dsh-composer-card-max-width,calc(100% + 32px));padding:0;box-sizing:border-box;}
 [data-rg-row][data-rg-fallback]{display:flex;justify-content:flex-end;width:100%;padding:0;order:3;box-sizing:border-box;}
 [data-rg-action]{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:calc(28px + var(--dsh-content-font-delta,0px));height:calc(28px + var(--dsh-content-font-delta,0px));padding:0;border:1px solid transparent;border-radius:var(--dsw-radius-sm,7px);background:transparent;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));font:inherit;font-size:12px;line-height:18px;white-space:nowrap;cursor:pointer;transition:background .12s,color .12s;}
 [data-rg-action]:hover:not([disabled]){background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));color:var(--dsw-alias-label-secondary,var(--dsw-alias-label-primary,inherit));}
 [data-rg-action]:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4c8dff);outline-offset:1px;}
 [data-rg-action][disabled]{opacity:.45;cursor:default;}
 [data-rg-icon]{width:calc(15px + var(--dsh-content-font-delta,0px));height:calc(15px + var(--dsh-content-font-delta,0px));display:block;flex:none;}
-[data-rg-action][data-rg-text]{width:auto;height:auto;padding:3px 9px;font-size:11.5px;border-color:var(--dsw-alias-border-l1,rgba(127,127,127,.3));}
-[data-rg-action][data-rg-primary]{background:var(--dsw-alias-brand-primary,#4c8dff);border-color:var(--dsw-alias-brand-primary,#4c8dff);color:#fff;}
-[data-rg-action][data-rg-primary]:hover:not([disabled]){background:var(--dsw-alias-brand-primary,#4c8dff);color:#fff;opacity:.88;}
 [data-rg-action][data-rg-busy] [data-rg-icon]{animation:rg-spin .9s linear infinite;}
 [data-rg-action][data-rg-failed]{color:var(--dsw-alias-state-error-primary,#e5534b);}
 @keyframes rg-spin{to{transform:rotate(360deg);}}
 @media (prefers-reduced-motion:reduce){[data-rg-action][data-rg-busy] [data-rg-icon]{animation:none;}}
-[data-rg-editor]{display:flex;flex-direction:column;gap:8px;box-sizing:border-box;width:100%;padding:10px 12px;border:1px solid var(--dsw-alias-border-l1,rgba(127,127,127,.28));border-radius:var(--dsw-radius-panel,var(--dsw-radius-lg,14px));background:var(--dsw-alias-bg-layer-2,rgba(127,127,127,.08));color:var(--dsw-alias-label-primary,inherit);}
-[data-rg-editor] textarea{width:100%;box-sizing:border-box;min-height:24px;max-height:min(420px,50vh);resize:none;overflow:auto;padding:0;border:none;background:transparent;color:inherit;font:inherit;font-size:var(--dsh-content-font-size,14px);line-height:calc(24px + var(--dsh-content-font-delta,0px));outline:none;}
+/* Editor card mirrors the host composer card (ui-conversation InputBar
+ * .card): zero layout border with the l2 hairline drawn inside the soft
+ * elevation shadow, the elevated input surface fill, panel radius, and the
+ * composer's vertical rhythm (8px top pad, 12px gap, toolbar-owned bottom). */
+[data-rg-editor]{display:flex;flex-direction:column;gap:12px;box-sizing:border-box;width:100%;padding:8px 0 0;border:0;--dsw-elevation-stroke-color:var(--dsw-alias-border-l2,rgba(127,127,127,.3));border-radius:var(--dsw-radius-panel,28px);background:var(--dsw-specific-input-major,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.08)));box-shadow:var(--dsw-elevation-soft,0 0 0 .5px var(--dsw-alias-border-l2,rgba(127,127,127,.3)),0 4px 16px rgba(0,0,0,.03),0 0 24px rgba(0,0,0,.03));color:var(--dsw-alias-label-primary,inherit);font-size:var(--dsh-content-font-size,14px);line-height:calc(24px + var(--dsh-content-font-delta,0px));transition:box-shadow .15s ease;--dsh-scrollbar-thumb:var(--dsw-alias-scrollbar-bg-l2);--dsh-scrollbar-thumb-hover:var(--dsw-alias-scrollbar-hover-l2);}
+/* Focus ring: the hairline step brightens to the business blue while the
+ * soft shadow stays — the same accent the composer caret uses. */
+[data-rg-editor]:focus-within{--dsw-elevation-stroke-color:var(--dsw-alias-state-business-primary,var(--dsw-alias-brand-primary,#4c8dff));}
+@media (pointer:coarse){[data-rg-editor]{font-size:max(16px,var(--dsh-content-font-size,14px));}}
+/* Draft surface mirrors the composer's .scroll + .input pair: the 14px
+ * left inset and 4px top pad, one-line floor, the shared 14-line height cap,
+ * and the 4px right inset that keeps the scrollbar off the card's arc. */
+[data-rg-editor] textarea{width:100%;box-sizing:border-box;min-height:28px;max-height:min(var(--dsh-composer-text-max-height,336px),50vh);resize:none;overflow-y:auto;padding:4px 12px 0 14px;border:none;background:transparent;color:inherit;font:inherit;font-size:inherit;line-height:inherit;caret-color:var(--dsw-alias-state-business-primary,var(--dsw-alias-brand-primary,#4c8dff));outline:none;}
+[data-rg-editor] textarea::-webkit-scrollbar-track{margin-top:8px;}
 [data-rg-editor] textarea:focus{outline:none;}
-[data-rg-attachments]{display:flex;align-items:stretch;gap:10px;min-width:0;max-width:100%;padding:2px 0;overflow:auto hidden;scrollbar-width:none;}
+/* Accessory strip: the composer's 10px/12px top inset above the draft. */
+[data-rg-attachments]{display:flex;align-items:stretch;gap:10px;min-width:0;max-width:100%;padding:10px 12px 0;overflow:auto hidden;scrollbar-width:none;}
 [data-rg-attachments]::-webkit-scrollbar{display:none;}
 [data-rg-attach-item]{position:relative;flex:none;width:64px;height:64px;}
-[data-rg-thumb]{box-sizing:border-box;width:64px;height:64px;border:.5px solid var(--dsw-alias-border-l2,rgba(127,127,127,.3));border-radius:var(--dsw-radius-xl,var(--dsw-radius-lg,14px));background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.1));overflow:hidden;display:grid;place-items:center;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));}
+[data-rg-thumb]{box-sizing:border-box;width:64px;height:64px;border:.5px solid var(--dsw-alias-border-l2-darkmode-thin,var(--dsw-alias-border-l2,rgba(127,127,127,.3)));border-radius:var(--dsw-radius-xl,20px);background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.1));overflow:hidden;display:grid;place-items:center;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));}
 [data-rg-thumb] img{object-fit:cover;width:100%;height:100%;display:block;}
-[data-rg-file]{box-sizing:border-box;flex:none;display:inline-flex;align-items:center;gap:10px;width:240px;max-width:100%;height:64px;padding:0 12px;border:.5px solid var(--dsw-alias-border-l2,rgba(127,127,127,.3));border-radius:var(--dsw-radius-lg,12px);background:var(--dsw-alias-bg-layer-1,rgba(127,127,127,.06));overflow:hidden;}
+[data-rg-file]{position:relative;box-sizing:border-box;flex:none;display:inline-flex;align-items:center;gap:10px;width:240px;max-width:100%;height:64px;padding:0 12px;border:.5px solid var(--dsw-alias-border-l2,rgba(127,127,127,.3));border-radius:var(--dsw-radius-lg,16px);background:var(--dsw-alias-bg-layer-1,rgba(127,127,127,.06));overflow:hidden;}
 [data-rg-file-icon]{flex:none;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;color:var(--dsw-alias-label-secondary,inherit);}
 [data-rg-file-icon] svg{width:24px;height:24px;display:block;}
 [data-rg-file-body]{display:flex;flex-direction:column;min-width:0;gap:2px;}
 [data-rg-file-name]{font-size:12px;line-height:16px;color:var(--dsw-alias-label-primary,inherit);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 [data-rg-file-meta]{font-size:11px;line-height:14px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));}
-[data-rg-attach-item] [data-rg-remove]{position:absolute;top:-6px;right:-6px;width:18px;height:18px;padding:0;border:1px solid var(--dsw-alias-border-l1,rgba(127,127,127,.3));border-radius:50%;background:var(--dsw-alias-bg-layer-1,rgba(127,127,127,.12));color:var(--dsw-alias-label-secondary,inherit);font-size:11px;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center;}
-[data-rg-attach-item][data-rg-own]:hover [data-rg-remove]{display:inline-flex;}
+/* Remove control mirrors the host rail: an 18px contrast-fill circle inset
+ * 4px into the chip (the rail's hidden scrollbar would clip an overhanging
+ * badge), revealed on hover or keyboard focus and always shown on touch. */
+[data-rg-attach-item] [data-rg-remove],[data-rg-file] [data-rg-remove]{position:absolute;top:4px;right:4px;z-index:1;display:grid;place-items:center;width:18px;height:18px;padding:0;border:none;border-radius:50%;background:var(--dsw-alias-button-contrast-fill,rgba(0,0,0,.65));color:var(--dsw-alias-label-primary-inverted,#fff);font-size:11px;line-height:1;cursor:pointer;opacity:0;transition:opacity .2s ease-in-out;}
+[data-rg-own]:hover [data-rg-remove],[data-rg-remove]:focus-visible{opacity:1;}
+@media (hover:none),(pointer:coarse){[data-rg-remove]{opacity:1;}}
+@media (prefers-reduced-motion:reduce){[data-rg-remove]{transition:none;}}
 [data-rg-attach-item][data-rg-uploading]::after{content:'';position:absolute;inset:0;border-radius:inherit;border:2px solid var(--dsw-alias-brand-primary,#4c8dff);border-top-color:transparent;animation:rg-spin .9s linear infinite;}
-[data-rg-add]{display:inline-flex;align-items:center;justify-content:center;flex:none;width:28px;height:28px;padding:0;border:none;border-radius:50%;background:transparent;color:var(--dsw-alias-label-secondary,inherit);font:inherit;cursor:pointer;}
-[data-rg-add]:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));color:var(--dsw-alias-label-primary,inherit);}
-[data-rg-add] svg{width:16px;height:16px;display:block;}
-[data-rg-controls]{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-[data-rg-controls] [data-rg-left]{display:flex;align-items:center;gap:12px;min-width:0;}
-[data-rg-controls] [data-rg-right]{display:flex;align-items:center;gap:12px;margin-left:auto;min-width:0;}
+/* Toolbar row mirrors the composer's .row: space-between with the trailing
+ * group re-anchoring right on its own wrapped line. */
+[data-rg-controls]{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:2px 8px 6px;min-width:0;}
+[data-rg-controls] [data-rg-left]{display:flex;align-items:center;gap:8px;min-width:0;}
+[data-rg-controls] [data-rg-right]{display:flex;align-items:center;gap:8px;margin-left:auto;min-width:0;}
 [data-rg-knob]{position:relative;}
-[data-rg-knob-trigger]{display:inline-flex;align-items:center;max-width:220px;height:28px;padding:0 20px 0 8px;border:none;border-radius:var(--dsw-radius-sm,7px);outline:none;background-color:transparent;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2381858C' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 4px center;background-size:12px 12px;color:var(--dsw-alias-label-secondary,inherit);font:inherit;font-size:13px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer;appearance:none;}
+[data-rg-knob-trigger]{display:inline-flex;align-items:center;max-width:220px;height:28px;padding:0 20px 0 8px;border:none;border-radius:var(--dsw-radius-sm,8px);outline:none;background-color:transparent;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2381858C' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 4px center;background-size:12px 12px;color:var(--dsw-alias-label-secondary,inherit);font:inherit;font-size:13px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer;appearance:none;}
 [data-rg-knob-trigger]:hover:not([disabled]){background-color:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));}
+[data-rg-knob-trigger]:focus-visible{box-shadow:0 0 0 2px var(--dsw-alias-state-business-primary,#4c8dff);}
 [data-rg-knob-trigger][disabled]{opacity:.5;cursor:default;}
-[data-rg-knob-trigger] [data-rg-effort]{margin-left:4px;font-weight:600;}
-[data-rg-knob-menu]{position:absolute;bottom:calc(100% + 6px);right:0;z-index:40;min-width:230px;max-width:320px;max-height:300px;overflow:auto;padding:4px;border:1px solid var(--dsw-alias-border-l2,rgba(127,127,127,.3));border-radius:var(--dsw-radius-lg,12px);background:var(--dsw-alias-bg-layer-1,rgba(127,127,127,.06));box-shadow:0 8px 24px rgba(0,0,0,.28);display:flex;flex-direction:column;gap:1px;}
-[data-rg-knob-item]{display:flex;flex-direction:column;gap:1px;padding:6px 8px;border:none;border-radius:var(--dsw-radius-sm,7px);background:transparent;color:var(--dsw-alias-label-primary,inherit);font:inherit;font-size:12px;line-height:16px;text-align:left;cursor:pointer;}
-[data-rg-knob-item]:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));}
-[data-rg-knob-item][data-rg-active]{color:var(--dsw-alias-brand-primary,#4c8dff);}
-[data-rg-knob-cell]{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border:none;border-radius:var(--dsw-radius-sm,7px);background:transparent;color:var(--dsw-alias-label-primary,inherit);font:inherit;font-size:12.5px;line-height:18px;text-align:left;cursor:pointer;}
-[data-rg-knob-cell]:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));}
-[data-rg-knob-cell-label]{flex:1;min-width:0;color:var(--dsw-alias-label-secondary,inherit);}
-[data-rg-knob-cell-value]{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dsw-alias-label-primary,inherit);}
-[data-rg-knob-cell-chevron]{flex:none;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));}
-[data-rg-knob-back]{display:flex;align-items:center;gap:6px;width:100%;padding:6px 8px;border:none;border-radius:var(--dsw-radius-sm,7px);background:transparent;color:var(--dsw-alias-label-secondary,inherit);font:inherit;font-size:12px;line-height:16px;text-align:left;cursor:pointer;}
-[data-rg-knob-back]:hover{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));}
-[data-rg-knob-back-arrow]{color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));}
-[data-rg-knob-detail]{font-size:11px;line-height:14px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));}
-[data-rg-knob-head]{padding:6px 8px 2px;font-size:10.5px;line-height:14px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));text-transform:uppercase;letter-spacing:.04em;}
-[data-rg-add]{display:grid;place-items:center;flex:none;width:28px;height:28px;padding:0;border:none;border-radius:999px;background:var(--dsw-specific-selector,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));color:var(--dsw-alias-label-primary,inherit);font:inherit;cursor:pointer;}
-[data-rg-add]:hover:not([disabled]){background:var(--dsw-alias-interactive-bg-hover-solid,var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.2))));}
+[data-rg-knob-trigger] [data-rg-effort]{margin-left:4px;font-weight:400;color:var(--dsw-alias-label-caption,var(--dsw-alias-label-tertiary,inherit));}
+/* Picker menu mirrors the host ModelSelect card: prominent elevation over
+ * the l1 hairline, 4px pad, 12px item radius, capped height with the l2
+ * scrollbar pair. Opens downward from the chip, right-aligned to it. */
+[data-rg-knob-menu]{position:absolute;top:calc(100% + 8px);right:0;z-index:40;box-sizing:border-box;min-width:240px;max-width:min(360px,80vw);max-height:min(360px,50vh);overflow:hidden auto;padding:4px;border:0;--dsw-elevation-stroke-color:var(--dsw-alias-border-l1,rgba(127,127,127,.28));border-radius:var(--dsw-radius-lg,16px);background:var(--dsw-specific-input-major,var(--dsw-alias-bg-layer-1,#fff));box-shadow:var(--dsw-elevation-prominent,0 0 0 .5px var(--dsw-alias-border-l1,rgba(127,127,127,.28)),0 3px 8px rgba(0,0,0,.04),0 0 20px rgba(0,0,0,.05));color:var(--dsw-alias-label-primary,inherit);display:flex;flex-direction:column;--dsh-scrollbar-thumb:var(--dsw-alias-scrollbar-bg-l2);--dsh-scrollbar-thumb-hover:var(--dsw-alias-scrollbar-hover-l2);}
+/* Option row: 34px min height, name + optional detail copy on the left and
+ * a trailing 14px selection check — the host Menu primitive's treatment. */
+[data-rg-knob-item]{box-sizing:border-box;display:flex;align-items:center;gap:6px;width:100%;min-height:34px;padding:5px 7px;border:none;border-radius:var(--dsw-radius-md,12px);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;flex:none;}
+[data-rg-knob-item]:hover,[data-rg-knob-item]:focus-visible{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));outline:none;}
+[data-rg-knob-copy]{display:flex;flex:1;flex-direction:column;min-width:0;gap:1px;}
+[data-rg-knob-name]{font-size:13px;line-height:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+[data-rg-knob-check]{display:grid;place-items:center;flex:0 0 14px;color:var(--dsw-alias-label-primary,inherit);}
+[data-rg-knob-check] svg{width:14px;height:14px;display:block;}
+[data-rg-knob-pending]{width:8px;height:8px;border-radius:50%;background:var(--dsw-alias-state-business-primary,#4c8dff);animation:rg-pulse 1s ease-in-out infinite alternate;}
+@keyframes rg-pulse{from{opacity:.35;}to{opacity:1;}}
+@media (prefers-reduced-motion:reduce){[data-rg-knob-pending]{animation:none;}}
+/* Root drill cells: 34px rows, label left, current value right in tertiary
+ * tone, 12px chevron — same rhythm as the option rows. */
+[data-rg-knob-menu][data-rg-flip=""]{top:auto;bottom:calc(100% + 8px);}
+[data-rg-knob-cell]{box-sizing:border-box;display:flex;align-items:center;gap:6px;width:100%;height:34px;padding:0 8px;border:none;border-radius:var(--dsw-radius-md,12px);background:transparent;color:var(--dsw-alias-label-primary,inherit);font:inherit;font-size:13px;line-height:20px;text-align:left;cursor:pointer;flex:none;}
+[data-rg-knob-cell]:hover,[data-rg-knob-cell]:focus-visible{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));outline:none;}
+[data-rg-knob-cell-label]{flex:none;white-space:nowrap;}
+[data-rg-knob-cell-value]{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));}
+[data-rg-knob-cell-chevron]{flex:none;width:12px;height:12px;color:var(--dsw-alias-menu-icon,var(--dsw-alias-label-tertiary,inherit));transform:rotate(-90deg);}
+[data-rg-knob-cell-chevron] svg{width:12px;height:12px;display:block;}
+/* Back row: caption-weight header with a left chevron, quieter than options. */
+[data-rg-knob-back]{display:flex;align-items:center;gap:4px;width:100%;height:30px;padding:0 7px;border:none;border-radius:var(--dsw-radius-md,12px);background:transparent;color:var(--dsw-alias-label-secondary,inherit);font:inherit;font-size:12px;line-height:16px;font-weight:500;text-align:left;cursor:pointer;flex:none;}
+[data-rg-knob-back]:hover,[data-rg-knob-back]:focus-visible{background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));outline:none;}
+[data-rg-knob-back-arrow]{flex:none;width:12px;height:12px;color:var(--dsw-alias-label-tertiary,inherit);transform:rotate(90deg);}
+[data-rg-knob-back-arrow] svg{width:12px;height:12px;display:block;}
+[data-rg-knob-detail]{font-size:11px;line-height:14px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;}
+/* Provider heading: sticky caption label pinned while its group scrolls. */
+[data-rg-knob-head]{position:sticky;top:-4px;z-index:1;margin:0 -4px;padding:8px 11px 4px;font-size:11px;line-height:14px;font-weight:500;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary,inherit));background:var(--dsw-specific-input-major,var(--dsw-alias-bg-layer-1,#fff));letter-spacing:.02em;flex:none;}
+/* Add control: the composer chip chrome (borderless, hover fill) with a
+ * text label — a labeled + reads clearer than the bare circle. */
+[data-rg-add]{display:inline-flex;align-items:center;gap:5px;flex:none;height:28px;padding:0 8px;border:none;border-radius:var(--dsw-radius-sm,8px);background:transparent;color:var(--dsw-alias-label-secondary,inherit);font:inherit;font-size:13px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer;}
+[data-rg-add]:hover:not([disabled]){background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));color:var(--dsw-alias-label-primary,inherit);}
+[data-rg-add]:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary,#4c8dff);outline-offset:1px;}
 [data-rg-add][disabled]{opacity:.5;cursor:default;}
-[data-rg-add] svg{width:16px;height:16px;display:block;}
-[data-rg-send]{display:grid;place-items:center;flex:none;width:34px;height:34px;padding:0;border:none;border-radius:999px;background:var(--dsw-alias-button-info-fill,#3964FE);color:var(--dsw-alias-label-on-color,#fff);cursor:pointer;transition:background-color 100ms ease;transform:translateY(-2px);}
-[data-rg-send]:hover:not([disabled]){background:var(--dsw-alias-button-info-hover,#679EFE);}
-[data-rg-send]:focus-visible{outline:2px solid var(--dsw-alias-button-info-fill,#3964FE);outline-offset:1px;}
-[data-rg-send][disabled]{opacity:.4;cursor:default;}
-[data-rg-send][data-rg-busy]{opacity:1;cursor:progress;}
-[data-rg-send][data-rg-busy] svg{animation:rg-spin 800ms linear infinite;}
-[data-rg-send] svg{width:16px;height:16px;display:block;}
-@media (prefers-reduced-motion:reduce){[data-rg-send][data-rg-busy] svg{animation-duration:2400ms;}}
+[data-rg-add] svg{width:14px;height:14px;display:block;flex:none;}
+/* Ghost Cancel: quiet secondary text button beside the primary action. */
+[data-rg-cancel]{display:inline-flex;align-items:center;flex:none;height:28px;padding:0 10px;border:none;border-radius:var(--dsw-radius-sm,8px);background:transparent;color:var(--dsw-alias-label-secondary,inherit);font:inherit;font-size:13px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer;}
+[data-rg-cancel]:hover:not([disabled]){background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2,rgba(127,127,127,.12)));color:var(--dsw-alias-label-primary,inherit);}
+[data-rg-cancel]:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary,#4c8dff);outline-offset:1px;}
+[data-rg-cancel][disabled]{opacity:.5;cursor:default;}
+/* Primary Resubmit: solid info-fill pill — the composer send pair as a text
+ * button, the highest-weight element in the row. */
+[data-rg-submit]{display:inline-flex;align-items:center;justify-content:center;flex:none;height:28px;padding:0 14px;border:none;border-radius:999px;background:var(--dsw-alias-button-info-fill,#3964FE);color:var(--dsw-alias-label-on-color,#fff);font:inherit;font-size:13px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer;transition:background-color 100ms ease;}
+[data-rg-submit]:hover:not([disabled]){background:var(--dsw-alias-button-info-hover,#679EFE);}
+[data-rg-submit]:focus-visible{outline:2px solid var(--dsw-alias-button-info-fill,#3964FE);outline-offset:1px;}
+[data-rg-submit][disabled]{opacity:.4;cursor:default;}
+[data-rg-submit][data-rg-busy]{opacity:1;cursor:progress;}
+/* Keymap line under the card: caption tone, right-aligned like the
+ * composer's readings row. */
+[data-rg-hint]{padding:6px 12px 0;font-size:12px;line-height:18px;color:var(--dsw-alias-label-caption,var(--dsw-alias-label-tertiary,inherit));text-align:right;}
 [data-rg-errorline]{font-size:11px;line-height:16px;color:var(--dsw-alias-state-error-primary,#e5534b);}
 [data-rg-error]{font-size:11px;line-height:16px;color:var(--dsw-alias-state-error-primary,#e5534b);}
 `;
@@ -180,18 +229,6 @@ window.__ModuleLoader__.load({
         title: tip, 'aria-label': tip, 'aria-busy': busy ? 'true' : undefined,
         onClick: (event) => { event.preventDefault(); event.stopPropagation(); if (!disabled) onClick(); },
       }, h(Icon, { kind: icon }));
-    }
-
-    /** Text-only form button for the inline editor (no icon beside the label).
-     * `hint` carries the action's full meaning in a hover tooltip. */
-    function TextButton({ label, hint, onClick, disabled, primary }) {
-      return h('button', {
-        type: 'button', 'data-rg-action': '', 'data-rg-text': '',
-        'data-rg-primary': primary ? '' : undefined,
-        disabled: Boolean(disabled),
-        title: hint || undefined,
-        onClick: (event) => { event.preventDefault(); event.stopPropagation(); if (!disabled) onClick(); },
-      }, label);
     }
 
     function fileExtension(name) {
@@ -242,20 +279,31 @@ window.__ModuleLoader__.load({
       return h('svg', {
         viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
         'stroke-width': 1.9, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
-        'aria-hidden': true, style: { width: 16, height: 16 },
+        'aria-hidden': true,
       },
         h('path', { d: 'M12 5v14' }),
         h('path', { d: 'M5 12h14' }));
     }
 
-    function SendGlyph() {
-      return h('svg', {
-        viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
-        'stroke-width': 2.1, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
-        'aria-hidden': true,
-      },
-        h('path', { d: 'M12 19V5' }),
-        h('path', { d: 'm5 12 7-7 7 7' }));
+    /** Files of a clipboard/drop payload in transfer order, skipping folder
+     * members (the entry API marks them; a folder has no uploadable bytes).
+     * Mirrors the host composer's clipboardFiles intake. */
+    function transferFiles(transfer) {
+      if (!transfer) return [];
+      const files = [];
+      for (const item of Array.from(transfer.items || [])) {
+        if (item.kind !== 'file') continue;
+        const file = item.getAsFile();
+        if (!file) continue;
+        if (typeof item.webkitGetAsEntry === 'function') {
+          const entry = item.webkitGetAsEntry();
+          if (entry && entry.isDirectory) continue;
+        }
+        files.push(file);
+      }
+      // Engines without an item list (some test/older paths) still carry files.
+      if (!files.length && transfer.files) return Array.from(transfer.files);
+      return files;
     }
 
     const IMAGE_MEDIA_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
@@ -424,6 +472,15 @@ window.__ModuleLoader__.load({
       return React.useSyncExternalStore(subscribe, getSnapshot);
     }
 
+    /** Trailing selection check, matching the host menu's 14px mark. */
+    function CheckGlyph() {
+      return h('svg', {
+        viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
+        'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+        'aria-hidden': true,
+      }, h('path', { d: 'M20 6 9 17l-5-5' }));
+    }
+
     function ChevronGlyph() {
       return h('svg', {
         viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
@@ -458,6 +515,33 @@ window.__ModuleLoader__.load({
       const [pending, setPending] = React.useState(null);
       const [open, setOpen] = React.useState(false);
       const [pane, setPane] = React.useState('root');
+      const menuRef = React.useRef(null);
+      const knobRef = React.useRef(null);
+      // Downward by default; near the viewport floor the menu flips above the
+      // chip so it never opens off-screen. Measured once per open; the menu
+      // is chip-anchored, so page scroll carries it along correctly.
+      React.useEffect(() => {
+        if (!open) return;
+        const knob = knobRef.current;
+        const menu = menuRef.current;
+        if (!knob || !menu) return;
+        const rect = knob.getBoundingClientRect();
+        const below = window.innerHeight - rect.bottom - 8;
+        const above = rect.top - 8;
+        const wanted = Math.min(360, window.innerHeight * 0.5);
+        menu.setAttribute('data-rg-flip', below < Math.min(wanted, 240) && above > below ? '' : 'off');
+      }, [open]);
+      // A drilled list opens at its selected row, not scrolled to the top.
+      React.useEffect(() => {
+        if (!open || pane === 'root') return;
+        const menu = menuRef.current;
+        const active = menu && menu.querySelector('[data-rg-active]');
+        if (active) {
+          // Manual offset keeps the page itself from scrolling: only the
+          // menu's own scrollport moves.
+          menu.scrollTop = active.offsetTop - menu.clientHeight / 2 + active.clientHeight / 2;
+        }
+      }, [open, pane]);
       const current = selection && selection.next ? selection.next : null;
       React.useEffect(() => {
         let alive = true;
@@ -507,13 +591,15 @@ window.__ModuleLoader__.load({
         const level = (reasoning.efforts || []).find((item) => item.id === effectiveEffort);
         return level ? level.name : (effectiveEffort.charAt(0).toUpperCase() + effectiveEffort.slice(1));
       };
-      const submitModel = async (route, reasoningEffort) => {
-        setPending(route);
+      const submitModel = async (route, reasoningEffort, label) => {
+        setPending({ ...route, label });
         setError('');
         try {
           const request = { sessionId, provider: route.providerId, model: route.modelId };
           if (reasoningEffort !== undefined) request.reasoningEffort = reasoningEffort;
-          const result = await CTX.remote.session.selectModel(request, new AbortController().signal);
+          // The remote takes the request only — the client api validates
+          // argument counts, and an extra signal fails the call entirely.
+          const result = await CTX.remote.session.selectModel(request);
           if (!result || result.ok !== true) {
             throw new Error(result && result.error ? result.error.message : 'rejected');
           }
@@ -530,7 +616,7 @@ window.__ModuleLoader__.load({
           setOpen(false);
           return;
         }
-        submitModel({ providerId: item.providerId, modelId: item.modelId }, item.defaultEffort);
+        submitModel({ providerId: item.providerId, modelId: item.modelId }, item.defaultEffort, item.label);
       };
       const pickEffort = (item) => {
         if (!current) return;
@@ -538,7 +624,7 @@ window.__ModuleLoader__.load({
           setOpen(false);
           return;
         }
-        submitModel({ providerId: current.provider, modelId: current.model }, item.effort);
+        submitModel({ providerId: current.provider, modelId: current.model }, item.effort, item.label);
       };
       const modelItems = [];
       for (const group of groups) {
@@ -570,22 +656,33 @@ window.__ModuleLoader__.load({
       const modelLabel = pending ? '\u2026 ' + (pending.label || '')
         : (currentModel ? currentModel.name : (current ? current.provider + '/' + current.model : t('model')));
       const effortText = effortLabelOf();
-      const knobRow = (item, activeId) => h('button', {
-        type: 'button', 'data-rg-knob-item': '', role: 'menuitemradio',
-        'data-rg-active': item.id === activeId ? '' : undefined,
-        'aria-checked': item.id === activeId ? 'true' : 'false',
-        key: item.id, title: item.detail || undefined,
-        onClick: (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          if (item.heading) return;
-          if (pane === 'model') pickModel(item);
-          else pickEffort(item);
+      const knobRow = (item, activeId) => {
+        // Provider headings are sticky non-interactive labels, not buttons.
+        if (item.heading) {
+          return h('div', { 'data-rg-knob-head': '', role: 'presentation', key: item.id }, item.label);
+        }
+        const active = item.id === activeId;
+        const isPending = pending && pane === 'model'
+          && item.providerId === pending.providerId && item.modelId === pending.modelId;
+        return h('button', {
+          type: 'button', 'data-rg-knob-item': '', role: 'menuitemradio',
+          'data-rg-active': active ? '' : undefined,
+          'aria-checked': active ? 'true' : 'false',
+          key: item.id, title: item.detail || undefined,
+          onClick: (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (pane === 'model') pickModel(item);
+            else pickEffort(item);
+          },
         },
-      },
-        h('span', null, item.label),
-        item.detail ? h('span', { 'data-rg-knob-detail': '' }, item.detail) : null);
-      return h('div', { 'data-rg-knob': '' },
+          h('span', { 'data-rg-knob-copy': '' },
+            h('span', { 'data-rg-knob-name': '' }, item.label),
+            item.detail ? h('span', { 'data-rg-knob-detail': '' }, item.detail) : null),
+          h('span', { 'data-rg-knob-check': '' },
+            isPending ? h('span', { 'data-rg-knob-pending': '' }) : active ? h(CheckGlyph) : null));
+      };
+      return h('div', { ref: knobRef, 'data-rg-knob': '' },
         h('button', {
           type: 'button', 'data-rg-knob-trigger': '', 'aria-haspopup': 'menu',
           'aria-expanded': open ? 'true' : 'false',
@@ -599,7 +696,7 @@ window.__ModuleLoader__.load({
         },
           pending ? '\u2026 ' + (pending.label || '') : modelLabel,
           !pending && effortText ? h('span', { 'data-rg-effort': '' }, effortText) : null),
-        open ? h('div', { 'data-rg-knob-menu': '', role: 'menu' },
+        open ? h('div', { ref: menuRef, 'data-rg-knob-menu': '', role: 'menu' },
           pane === 'root'
             ? [
                 h('button', {
@@ -608,7 +705,7 @@ window.__ModuleLoader__.load({
                 },
                   h('span', { 'data-rg-knob-cell-label': '' }, t('menuModel')),
                   h('span', { 'data-rg-knob-cell-value': '' }, modelLabel),
-                  h('span', { 'data-rg-knob-cell-chevron': '' }, '\u203a')),
+                  h('span', { 'data-rg-knob-cell-chevron': '' }, h(ChevronGlyph))),
                 reasoning
                   ? h('button', {
                       type: 'button', 'data-rg-knob-cell': '', role: 'menuitem', key: 'cell-effort',
@@ -616,7 +713,7 @@ window.__ModuleLoader__.load({
                     },
                       h('span', { 'data-rg-knob-cell-label': '' }, t('menuEffort')),
                       h('span', { 'data-rg-knob-cell-value': '' }, effortText || ''),
-                      h('span', { 'data-rg-knob-cell-chevron': '' }, '\u203a'))
+                      h('span', { 'data-rg-knob-cell-chevron': '' }, h(ChevronGlyph)))
                   : null,
               ]
             : [
@@ -624,7 +721,7 @@ window.__ModuleLoader__.load({
                   type: 'button', 'data-rg-knob-back': '', key: 'back',
                   onClick: (event) => { event.preventDefault(); event.stopPropagation(); setPane('root'); },
                 },
-                  h('span', { 'data-rg-knob-back-arrow': '' }, '\u2039'),
+                  h('span', { 'data-rg-knob-back-arrow': '' }, h(ChevronGlyph)),
                   pane === 'model' ? t('menuModel') : t('menuEffort')),
                 pane === 'model'
                   ? modelItems.map((item) => knobRow(item, activeModelId))
@@ -930,6 +1027,24 @@ window.__ModuleLoader__.load({
         return () => row.removeEventListener('click', handler);
       });
 
+      // The host's attachment view listens for document-level 'drop' in the
+      // bubble phase and would duplicate an editor-addressed drop into the
+      // bottom composer. React's synthetic stopPropagation does not reach
+      // those native listeners (React 17+ roots at its own container), so a
+      // native capture-phase guard on the card claims the drop first.
+      const editorRef = React.useRef(null);
+      React.useEffect(() => {
+        if (!editing) return undefined;
+        const card = editorRef.current;
+        if (!card) return undefined;
+        const claim = (event) => {
+          const types = event.dataTransfer && event.dataTransfer.types;
+          if (types && Array.from(types).includes('Files')) event.stopPropagation();
+        };
+        card.addEventListener('drop', claim, true);
+        return () => card.removeEventListener('drop', claim, true);
+      }, [editing]);
+
       // Dismiss on any click outside the editor. Capture phase runs before the
       // row's bubble-phase "click to open" handler; marking the event keeps
       // that handler from immediately re-opening the editor in the same click.
@@ -939,7 +1054,7 @@ window.__ModuleLoader__.load({
           if (busy) return;
           const target = event.target;
           if (target && typeof target.closest === 'function'
-            && target.closest('[data-rg-editor]')) return;
+            && target.closest('[data-rg-editor],[data-rg-hint]')) return;
           dismissedRef.current.add(event);
           setEditing(false);
           setError('');
@@ -966,6 +1081,11 @@ window.__ModuleLoader__.load({
       const [drafts, setDrafts] = React.useState([]);
       const inputRef = React.useRef(null);
       const textareaRef = React.useRef(null);
+      // IME tail guard: some engines fire the candidate-confirm Enter AFTER
+      // compositionend with isComposing already false (keyCode 229 absent).
+      // The host composer keeps the same recently-composing window.
+      const composingRef = React.useRef(false);
+      const composedAtRef = React.useRef(0);
       // Auto-fit: the editor starts one line tall and grows with its content.
       const fitTextarea = () => {
         const el = textareaRef.current;
@@ -1040,7 +1160,39 @@ window.__ModuleLoader__.load({
       };
 
       const editor = editing
-        ? h('div', { 'data-rg-editor': '' },
+        ? h(React.Fragment, null,
+            h('div', {
+              ref: editorRef,
+              'data-rg-editor': '',
+              onPasteCapture: (event) => {
+                if (busy) return;
+                const files = transferFiles(event.clipboardData);
+                if (!files.length) return;
+                event.stopPropagation();
+                addFiles(files);
+                // A file-only paste is fully consumed; when text rides along
+                // (e.g. a copied image with alt text) let it insert natively.
+                if (!event.clipboardData.getData('text/plain')) event.preventDefault();
+              },
+              onDragOver: (event) => {
+                if (busy) return;
+                if (Array.from(event.dataTransfer.types || []).includes('Files')) {
+                  // No stopPropagation here: the host's document dragover keeps
+                  // the drop alive page-wide; stopping it outside a droppable
+                  // zone would let the browser cancel the drag before drop.
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = 'copy';
+                }
+              },
+              onDrop: (event) => {
+                if (busy) return;
+                const files = transferFiles(event.dataTransfer);
+                if (!files.length) return;
+                event.preventDefault();
+                event.stopPropagation();
+                addFiles(files);
+              },
+            },
             h(AttachmentRail, {
               blocks, sessionId: props.sessionId, t,
               drafts,
@@ -1056,34 +1208,55 @@ window.__ModuleLoader__.load({
               ref: textareaRef,
               value: text, 'aria-label': t('editHint'), spellCheck: false, autoFocus: true,
               onChange: (event) => setText(event.target.value),
+              onCompositionStart: () => { composingRef.current = true; },
+              onCompositionEnd: () => { composingRef.current = false; composedAtRef.current = Date.now(); },
               onKeyDown: (event) => {
                 if (event.key === 'Escape') { event.preventDefault(); cancel(); }
-                if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); submit(); }
+                if (event.key !== 'Enter') return;
+                // Shift+Enter keeps the newline.
+                if (event.shiftKey) return;
+                // An IME candidate pick never submits: live composition, the
+                // legacy keyCode 229 signal, or an Enter landing right after
+                // compositionend (engine order varies; same guard as the host).
+                if (event.isComposing || event.keyCode === 229 || composingRef.current
+                  || Date.now() - composedAtRef.current < 100) return;
+                // Plain Enter matches the composer; Ctrl/Cmd+Enter still works.
+                event.preventDefault();
+                submit();
               },
             }),
-            h('div', { 'data-rg-controls': '', 'aria-label': t('editorHint') },
-              h('button', {
-                type: 'button', 'data-rg-add': '', 'aria-label': t('addAttachment'),
-                title: t('addAttachment'), disabled: busy,
-                onClick: (event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  if (inputRef.current) inputRef.current.click();
-                },
-              }, h(PlusGlyph)),
-              h('div', { 'data-rg-right': '' },
-                error ? h('span', { 'data-rg-errorline': '', role: 'status' }, error) : null,
+            h('div', { 'data-rg-controls': '' },
+              h('div', { 'data-rg-left': '' },
+                h('button', {
+                  type: 'button', 'data-rg-add': '', 'aria-label': t('addAttachment'),
+                  title: t('addAttachment'), disabled: busy,
+                  onClick: (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (inputRef.current) inputRef.current.click();
+                  },
+                }, h(PlusGlyph), h('span', null, t('addAttachment'))),
                 knobsAvailable(props.sessionId)
                   ? h(ModelPicker, { sessionId: props.sessionId, busy, t })
-                  : null,
+                  : null),
+              h('div', { 'data-rg-right': '' },
+                error ? h('span', { 'data-rg-errorline': '', role: 'status' }, error) : null,
                 h('button', {
-                  type: 'button', 'data-rg-send': '',
+                  type: 'button', 'data-rg-cancel': '', disabled: busy,
+                  title: t('cancel'),
+                  onClick: (event) => { event.preventDefault(); event.stopPropagation(); cancel(); },
+                }, t('cancel')),
+                h('button', {
+                  type: 'button', 'data-rg-submit': '',
                   'data-rg-busy': busy ? '' : undefined,
-                  'aria-label': busy ? t('regenerating') : t('regenerate'),
-                  title: busy ? t('regenerating') : t('regenerateHint'),
+                  'aria-label': busy ? t('resubmitting') : t('resubmit'),
+                  title: busy ? t('resubmitting') : t('resubmitHint'),
                   disabled: busy,
                   onClick: (event) => { event.preventDefault(); event.stopPropagation(); submit(); },
-                }, h(SendGlyph)))))
+                }, busy ? t('resubmitting') : t('resubmit'))))),
+            // Visible keymap line under the card, right-aligned like the
+            // composer's readings row.
+            h('div', { 'data-rg-hint': '' }, t('editorHint')))
         : null;
 
 

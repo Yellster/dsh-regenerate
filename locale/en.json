@@ -7,10 +7,13 @@
     "regenerate": "Regenerate",
     "regenerating": "Regenerating…",
     "edit": "Edit",
-    "editHint": "Edit the prompt, then resend it",
-    "send": "Save and resend",
+    "editHint": "Edit this prompt",
     "cancel": "Cancel",
     "failed": "Operation failed",
-    "emptyPrompt": "The prompt cannot be empty"
+    "emptyPrompt": "The prompt cannot be empty",
+    "editorHint": "Enter to resubmit · Shift+Enter for a new line · Esc to cancel",
+    "resubmit": "Resubmit",
+    "resubmitting": "Resubmitting…",
+    "resubmitHint": "Send the edited prompt in this chat; the earlier exchange stays in context"
   }
 }
