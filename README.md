@@ -71,12 +71,28 @@ After installation a page refresh loads the new browser module.
 
 ## Publishing
 
-Maintainer notes for releasing a new version:
+Releases are published to npm automatically by
+[`.github/workflows/publish.yml`](.github/workflows/publish.yml).
+
+One-time setup — configure npm trusted publishing (OIDC), so no `NPM_TOKEN` is
+stored in GitHub:
+
+1. On npmjs.com, open the package settings for `dsh-regenerate` →
+   **Trusted publishing** → **Add trusted publisher**.
+2. Use GitHub Actions with owner `Yellster`, repository `dsh-regenerate`,
+   workflow `publish.yml`, and environment `npm`; allow publishing.
+3. Pushing a version tag, publishing a GitHub Release, or running the workflow
+   manually with a tag triggers the publish. The workflow checks out that tag,
+   verifies its version matches `package.json`, runs `npm test`, skips versions
+   already on npm, and publishes with OIDC/provenance.
+
+For a manual release:
 
 1. Bump `version` in `package.json`, then commit and push.
-2. **npm** — `npm login` once, then `npm publish`; the `files` whitelist is
-   already configured and no build step is needed.
-3. **Plugin index** — prepend a new entry to `versions` in `index.json` with the
-   new version, the release commit's full 40-character SHA, and its publish time
-   in Unix seconds, then commit and push. Git entries must stay pinned to a full
-   commit SHA to remain updatable.
+2. Create the GitHub Release (or push the matching tag); the workflow publishes it.
+3. Prepend a new entry to `versions` in `index.json` with the new version, the
+   release commit's full 40-character SHA, and its publish time in Unix seconds,
+   then commit and push. Git entries must stay pinned to a full commit SHA.
+
+If trusted publishing is not available, `npm login` followed by `npm publish`
+still works locally (account 2FA applies).

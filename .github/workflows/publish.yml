@@ -1,0 +1,88 @@
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - '*'
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to publish (for example 1.0.1)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      EVENT_NAME: ${{ github.event_name }}
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+      INPUT_TAG: ${{ github.event.inputs.tag }}
+    steps:
+      - name: Resolve tag
+        id: tag
+        shell: bash
+        run: |
+          case "$EVENT_NAME" in
+            release) TAG="$RELEASE_TAG" ;;
+            workflow_dispatch) TAG="$INPUT_TAG" ;;
+            *) TAG="${GITHUB_REF_NAME}" ;;
+          esac
+          if [ -z "$TAG" ]; then
+            echo "No tag could be resolved." >&2
+            exit 1
+          fi
+          echo "name=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Publishing tag: $TAG"
+
+      - name: Check out the tagged commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.tag.outputs.name }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Ensure npm supports trusted publishing
+        run: npm install -g npm@12
+
+      - name: Validate tag matches package version
+        shell: bash
+        run: |
+          TAG="${{ steps.tag.outputs.name }}"
+          VERSION=$(node -p "require('./package.json').version")
+          if [ "$TAG" != "$VERSION" ] && [ "$TAG" != "v$VERSION" ]; then
+            echo "Tag $TAG does not match package version $VERSION." >&2
+            exit 1
+          fi
+
+      - name: Skip when the version is already on npm
+        id: check
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "dsh-regenerate@$VERSION" version >/dev/null 2>&1; then
+            echo "dsh-regenerate@$VERSION is already published; nothing to do."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run tests
+        if: steps.check.outputs.skip != 'true'
+        run: npm test
+
+      - name: Publish to npm
+        if: steps.check.outputs.skip != 'true'
+        run: npm publish --access public
