@@ -30,6 +30,18 @@
       },
       "versions": [
         {
+          "version": "1.1.0",
+          "publishTimestamp": 1795239576,
+          "source": {
+            "type": "git",
+            "url": "https://github.com/Yellster/dsh-regenerate",
+            "commit": "a6b52768b285803ec82271e9a8df70c1e1d4fdd7"
+          },
+          "engines": {
+            "dsh": ">=0.2.0"
+          }
+        },
+        {
           "version": "1.0.1",
           "publishTimestamp": 1794828449,
           "source": {
