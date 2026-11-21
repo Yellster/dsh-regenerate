@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-21
+
+A feature release: regeneration is now driven by the Host with a hidden continuation,
+and the inline editor accepts pasted and dropped attachments. No breaking changes;
+older Host bundles fall back to the legacy flow.
+
 ### Added
 
 - **Host-driven regeneration** — the answer-row icon now POSTs to `POST /api/dsh-regenerate/regenerate`, which analyses the target turn and injects a frozen `cordis-host-runner` continuation through `agent.followup()` that explicitly asks the model to disregard its previous final response. The instruction adapts to the turn's end reason and to committed assistant/tool progress, and the original attachments are rebuilt into the continuation host-side. The client falls back to the legacy append-prompt flow when the route is unavailable.
@@ -151,5 +157,6 @@ rewriting the append-only session log.
   in the market index entry) so incompatible runtimes are rejected before
   install.
 
+[1.1.0]: https://github.com/Yellster/dsh-regenerate/releases/tag/1.1.0
 [1.0.1]: https://github.com/Yellster/dsh-regenerate/releases/tag/1.0.1
 [1.0.0]: https://github.com/Yellster/dsh-regenerate/releases/tag/1.0.0

@@ -1,6 +1,6 @@
 {
   "name": "dsh-regenerate",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Regenerate assistant answers and edit/resend sent user prompts in the DSH conversation.",
   "scripts": {
     "test": "node --test \"tests/*.test.mjs\""
