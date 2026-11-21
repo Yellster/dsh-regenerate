@@ -81,7 +81,13 @@ jobs:
 
       - name: Run tests
         if: steps.check.outputs.skip != 'true'
-        run: npm test
+        shell: bash
+        run: |
+          if node -e "process.exit(require('./package.json').scripts?.test ? 0 : 1)"; then
+            npm test
+          else
+            echo "No test script in this tag; skipping tests."
+          fi
 
       - name: Publish to npm
         if: steps.check.outputs.skip != 'true'
